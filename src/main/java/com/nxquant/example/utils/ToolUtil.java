@@ -3,8 +3,6 @@ package com.nxquant.example.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.nxquant.example.entity.JsonType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ToolUtil {
 

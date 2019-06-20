@@ -10,7 +10,7 @@ import org.springframework.core.env.Environment;
 import java.util.Properties;
 
 @Configuration
-public class WorkContext {
+public class CustomConfiguration {
     private final String PREFIX = "com.nxquant.example";
 
     private String inputTopic;
@@ -25,7 +25,10 @@ public class WorkContext {
 
     @Bean
     @ConfigurationProperties(prefix = PREFIX + ".global")
-    public WorkContext loadProperties(Environment environment) {
+    public CustomConfiguration loadProperties(Environment environment) {
+        System.out.println("$============>>>>> Configuration is triggered");
+        System.out.println(System.currentTimeMillis());
+        System.out.println("============>>>>> End");
         return this;
     }
 
