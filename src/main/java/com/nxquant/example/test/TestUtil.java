@@ -1,12 +1,15 @@
 package com.nxquant.example.test;
 
 import com.nxquant.example.entity.Storage;
+import com.nxquant.example.service.ClearService;
 import com.nxquant.example.utils.ApplicationContextTool;
 import com.nxquant.example.entity.Order;
 import com.nxquant.example.lifecycle.beanlife.CustomBean;
 import com.nxquant.example.service.UserService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.common.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +25,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 public class TestUtil {
+    private Logger logger = LoggerFactory.getLogger(getClass());
+
     @Autowired
     UserService userService;
+
+    @Autowired
+    ClearService clearService;
 
     private void testPriorityQueue(){
         AtomicLong incLong = new AtomicLong(0);
@@ -142,20 +150,21 @@ public class TestUtil {
         return Utils.toPositive(Utils.murmur2(clientId.getBytes(StandardCharsets.UTF_8))) % 50;
     }
 
-    public void testTelnetFile(){
-        try {
-            // 相对路径，如果没有则要建立一个新的output.txt文件
-            File writeName = new File("list.txt");
-            FileWriter writer = new FileWriter(writeName);
-            BufferedWriter out = new BufferedWriter(writer);
-            int count = 1000;
-            for(int i = 0 ; i< count ; i++) {
-                String ipStr = "192.168.1." + i + "|3100\r\n";
-                out.write(ipStr);
-                out.flush(); // 把缓存区内容压入文件
+    public void testMeterRegistry(){
+        int count = 1000;
+        int repeatCount = 999;
+        for(int i = 0 ; i < count ; i++) {
+            clearService.getMeterRegistry().counter("TestName", "TestTag", "XBT").increment(1);
+            logger.info("INFO: MeterRegistry increment !");
+            if(i == repeatCount){
+                i = 0;
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                Thread.sleep(200);
+            }catch (Exception e){
+                //
+            }
         }
     }
+
 }

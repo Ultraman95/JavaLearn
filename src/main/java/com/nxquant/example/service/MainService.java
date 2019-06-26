@@ -10,6 +10,7 @@ public class MainService {
     @Autowired
     TestUtil testUtil;
 
+
     public void start(){
         System.out.println("*********AppLogic Begin*********");
         test();
@@ -18,6 +19,6 @@ public class MainService {
     private void test(){
         //testUtil.testAsync();
         //int partitionId = testUtil.testGetPartitionIdByClientId("9752877235");
-        testUtil.testTelnetFile();
+        testUtil.testMeterRegistry();
     }
 }
