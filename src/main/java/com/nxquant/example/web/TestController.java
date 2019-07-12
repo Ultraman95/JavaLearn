@@ -21,6 +21,9 @@ public class TestController {
     @Autowired
     private UserService userService;
 
+    public TestController(){
+        System.out.println("***********构造函数注入***********");
+    }
 
     @GetMapping(value = "/test")
     public String getHistoryKline(@RequestParam(value = "symbol") String symbol,
@@ -36,7 +39,7 @@ public class TestController {
      * @param user 用户对象
      * @return
      */
-    @RequestMapping(value = "/register")
+    @GetMapping(value = "/register")
     public String register(UserBean user) {
         //调用注册业务逻辑
         userService.register(user);

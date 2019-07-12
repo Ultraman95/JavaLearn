@@ -12,13 +12,14 @@ public class MainService {
 
 
     public void start(){
-        System.out.println("*********AppLogic Begin*********");
+        System.out.println("*********" + Thread.currentThread().getName() +" Begin*********");
         test();
     }
 
     private void test(){
         //testUtil.testAsync();
         //int partitionId = testUtil.testGetPartitionIdByClientId("9752877235");
-        testUtil.testMeterRegistry();
+        //testUtil.testMeterRegistry();
+        testUtil.testUserRegister();
     }
 }

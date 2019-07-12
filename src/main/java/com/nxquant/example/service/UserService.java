@@ -44,8 +44,7 @@ public class UserService {
         {
             //获取注册用户对象
             UserBean user = userRegisterEvent.getUser();
-
-            //../省略逻辑
+            //省略逻辑
 
             //输出注册用户信息
             System.out.println("@EventListener---注册信息，用户名："+user.getName()+"，密码："+user.getPassword());
@@ -81,8 +80,7 @@ public class UserService {
             //获取注册用户对象
             if(applicationEvent instanceof  UserRegisterEvent) {
                 UserBean user = ((UserRegisterEvent) applicationEvent).getUser();
-
-                //../省略逻辑
+                //省略逻辑
 
                 //输出注册用户信息
                 System.out.println("继承---注册信息，用户名：" + user.getName() + "，密码：" + user.getPassword());
@@ -130,7 +128,7 @@ public class UserService {
             UserRegisterEvent userRegisterEvent = (UserRegisterEvent) applicationEvent;
             //获取注册用户对象信息
             UserBean user = userRegisterEvent.getUser();
-            //.../完成注册业务逻辑
+            //省略逻辑
             System.out.println("有序监听---注册信息，用户名："+user.getName()+"，密码："+user.getPassword());
         }
 
@@ -195,6 +193,7 @@ public class UserService {
             return 1;
         }
     }
+
 
     @Async
     public String printAsync(){

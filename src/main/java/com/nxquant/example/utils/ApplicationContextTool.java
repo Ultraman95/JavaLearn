@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 //非Spring管理的实体内,可以通过这个方法获取被托管的Bean
+//注意，继承了ApplicationContextAware，setApplicationContext方法会被自动调用
 @Component
 public class ApplicationContextTool implements ApplicationContextAware {
     /**

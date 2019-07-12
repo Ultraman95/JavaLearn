@@ -1,0 +1,8 @@
+##SpringBoot中配置ApplicationListener的方式之一
+org.springframework.context.ApplicationListener=com.nxquant.example.lifecycle.ApplicationEventListener,\
+com.nxquant.example.lifecycle.ApplicationStartingEventListener,\
+com.nxquant.example.lifecycle.ApplicationEnvironmentPreparedEventListener,\
+com.nxquant.example.lifecycle.ApplicationPreparedEventListener,\
+com.nxquant.example.lifecycle.ApplicationReadyEventListener,\
+com.nxquant.example.lifecycle.ApplicationFailedEventListener
+

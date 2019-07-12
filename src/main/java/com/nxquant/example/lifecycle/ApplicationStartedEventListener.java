@@ -44,7 +44,6 @@ public class ApplicationStartedEventListener implements ApplicationListener<Appl
         //对需要用到meterRegistry的service注入meterRegistry
         context.getBeansOfType(WorkerManagerService.class).forEach((serviceName, serviceBean) -> serviceBean.setWorkerManager(workerManager));
         context.getBeansOfType(WorkerManagerService.class).forEach((serviceName, serviceBean) -> serviceBean.setMeterRegistry(meterRegistry));
-
     }
 
     private WorkerContext createWorkerContext(ApplicationContext context){

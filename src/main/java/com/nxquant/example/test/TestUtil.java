@@ -1,6 +1,7 @@
 package com.nxquant.example.test;
 
 import com.nxquant.example.entity.Storage;
+import com.nxquant.example.entity.UserBean;
 import com.nxquant.example.service.ClearService;
 import com.nxquant.example.utils.ApplicationContextTool;
 import com.nxquant.example.entity.Order;
@@ -130,6 +131,13 @@ public class TestUtil {
             totalTs += (System.currentTimeMillis() -bt);
         }
         System.out.println("TotalTs2 :" + totalTs);
+    }
+
+    public void testUserRegister(){
+        UserBean user = new UserBean();
+        user.setName("quant");
+        user.setPassword("yhgG012");
+        userService.register(user);
     }
 
     public void testGetBean(String beanName) {
