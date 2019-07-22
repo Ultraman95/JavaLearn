@@ -7,6 +7,9 @@ import com.nxquant.exchange.utils.ApplicationContextTool;
 import com.nxquant.exchange.entity.Order;
 import com.nxquant.exchange.lifecycle.beanlife.CustomBean;
 import com.nxquant.exchange.service.UserService;
+import com.nxquant.exchange.wallet.bitcoin.BitCoinApi;
+import com.nxquant.exchange.wallet.bitcoin.CreateAddressReqInfo;
+import com.nxquant.exchange.wallet.bitcoin.ValidateAddressReqInfo;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
@@ -29,6 +32,9 @@ public class TestUtil {
 
     @Autowired
     ClearService clearService;
+
+    @Autowired
+    BitCoinApi bitCoinApi;
 
     private void testPriorityQueue(){
         AtomicLong incLong = new AtomicLong(0);
@@ -168,6 +174,21 @@ public class TestUtil {
             }catch (Exception e){
                 //
             }
+        }
+    }
+
+    public void testBitCoin() {
+        //CreateAddressReqInfo reqInfo = new CreateAddressReqInfo();
+        //reqInfo.setLabel("shilf");
+        //bitCoinApi.createNewAddress(reqInfo);
+        long blockHeight = bitCoinApi.getLatestBlockHeight();
+        System.out.println("the latestBlockHeight is " + blockHeight);
+        ValidateAddressReqInfo reqInfo = new ValidateAddressReqInfo();
+        reqInfo.setAddress("3CfdtBnxpK69mQoGPhz6RmkuyDmiRUHR9E");
+        if (bitCoinApi.validateAddress(reqInfo)) {
+            System.out.println("Address is right");
+        } else {
+            System.out.println("Address is wrong");
         }
     }
 

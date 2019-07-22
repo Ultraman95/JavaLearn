@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nxquant.exchange.walletservice.dao.AddressMapper">
+    <insert id = "save" parameterType="com.nxquant.exchange.walletservice.entity.AddressEntity">
+        insert into t_address (coinid,address,createdate,isavailable)
+         values (#{coinid},#{address},#{createdate},#{isavailable})
+    </insert>
+
+    <select id="findAll"  resultType="com.nxquant.exchange.walletservice.entity.AddressEntity">
+        select coinid,address,createdate,isavailable
+        from t_address
+        where isavailable=1
+    </select>
+
+    <select id="findAllByCoinid" parameterType="java.lang.Integer" resultType="java.lang.String">
+        select address from t_address
+        where isavailable=1 and coinid = #{coinid, jdbcType=INTEGER}
+    </select>
+</mapper>

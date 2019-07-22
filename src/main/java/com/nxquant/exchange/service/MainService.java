@@ -20,6 +20,7 @@ public class MainService {
         //testUtil.testAsync();
         //int partitionId = testUtil.testGetPartitionIdByClientId("9752877235");
         //testUtil.testMeterRegistry();
-        testUtil.testUserRegister();
+        //testUtil.testUserRegister();
+        testUtil.testBitCoin();
     }
 }

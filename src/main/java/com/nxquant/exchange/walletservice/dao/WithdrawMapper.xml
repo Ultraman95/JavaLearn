@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nxquant.exchange.walletservice.dao.WithdrawMapper">
+    <select id="checkIsExist" parameterType="java.lang.String" resultType="com.nxquant.exchange.walletservice.entity.WithdrawEntity">
+        select orderid as orderid,
+              toaddr as toaddr,
+              value as value,
+              coinid as coinid,
+              passwd as passwd,
+              requesttime as requestTime,
+              processtime as processTime,
+              status as status,
+              auditing as Auditing,
+              auditor as Auditor
+       from t_withdraw where orderid = #{orderid,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findAllUnchecked"  resultType="com.nxquant.exchange.walletservice.entity.WithdrawEntity">
+        select withdrawid as withdrawId,
+              orderid as orderid,
+              toaddr as toaddr,
+              value as value,
+              coinid as coinid,
+              passwd as passwd,
+              requesttime as requestTime,
+              processtime as processTime,
+              status as status,
+              auditing as Auditing,
+              auditor as Auditor,
+              txid as txId,
+              startheight as startHeight,
+              txheight as txHeight
+       from t_withdraw where status != 3
+    </select>
+
+    <insert id="saveWithdraw" parameterType = "com.nxquant.exchange.walletservice.entity.WithdrawEntity">
+        <selectKey keyProperty="withdrawId" order="AFTER" resultType="java.lang.Integer">
+            select LAST_INSERT_ID() as withdrawId
+        </selectKey>
+        insert into t_withdraw (orderid,toaddr,value,coinid,passwd,requesttime,status,auditing)
+        values (#{orderid},#{toaddr},#{value},#{coinid},#{passwd},now(),0,#{auditing})
+    </insert>
+
+    <update id="updateWithdraw" parameterType = "com.nxquant.exchange.walletservice.entity.WithdrawEntity">
+        update t_withdraw set txid=#{txId},startheight=#{startHeight},status=#{status},processtime=#{processTime},
+         remark = #{remark},txheight=#{txHeight} where withdrawid=#{withdrawId}
+    </update>
+
+    <select id="findAll" resultType="com.nxquant.exchange.walletservice.entity.WithdrawEntity">
+      select orderid as orderid,
+              toaddr as toaddr,
+              value as value,
+              coinid as coinid,
+              passwd as passwd,
+              requesttime as requestTime,
+              processtime as processTime,
+              status as status,
+              auditing as Auditing,
+              auditor as Auditor
+       from t_withdraw
+    </select>
+</mapper>

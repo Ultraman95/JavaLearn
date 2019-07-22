@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nxquant.exchange.walletservice.dao.CoinInfoMapper">
+    <select id="findByCoinName" parameterType="java.lang.String" resultType="com.nxquant.exchange.walletservice.entity.CoinInfoEntity">
+        select id,
+              coinname,
+              coinprecision,
+              confirmations,
+              maxlittlewithdrawamount,
+              contractasset,
+              contractmainchainasset,
+              contractaddress,
+              coinid
+       from t_coininfo where coinname = #{coinname,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findAll" resultType="com.nxquant.exchange.walletservice.entity.CoinInfoEntity">
+        select id,
+              coinname,
+              coinprecision,
+              confirmations,
+              maxlittlewithdrawamount,
+              contractasset,
+              contractmainchainasset,
+              contractaddress,
+              coinid
+       from t_coininfo
+    </select>
+</mapper>
