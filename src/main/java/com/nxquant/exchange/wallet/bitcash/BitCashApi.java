@@ -1,13 +1,17 @@
 package com.nxquant.exchange.wallet.bitcash;
 
+import com.nxquant.exchange.wallet.model.BlockInfo;
+import com.nxquant.exchange.wallet.model.TransactionInfo;
+import com.nxquant.exchange.wallet.model.UnSpentInf;
 import com.nxquant.exchange.wallet.bitcoin.BitCoinApi;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
-import com.nxquant.exchange.wallet.model.*;
 import org.apache.commons.codec.binary.Base64;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,17 +19,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @author shilf
- * BCH--比特币现金
+ * Created by Administrator on 2018-06-13.
  */
 public class BitCashApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static Logger logger = LoggerFactory.getLogger(BitCoinApi.class);
 
     private JsonRpcHttpClient client = null;
-    private static Base64 base64 = new Base64();
     private String errorMsg = "";
+    private static Base64 base64 = new Base64();
     /**
-     * 与节点建立RPC连接
+     * 与bitcoind 建立RPC连接
      * @param user 用户
      * @param pwd 密码
      * @param rpcAddress 地址http://localhost:8080
@@ -37,8 +40,11 @@ public class BitCashApi {
         headers.put("Authorization", "Basic " + cred);
         try{
             client = new JsonRpcHttpClient(new URL(rpcAddress),headers);
+        }catch(MalformedURLException ex){
+            System.out.println(ex);
+            return false;
         }catch(Exception ex) {
-            logger.error("Error:BitCashApi--createConnection !" + ex);
+            System.out.println(ex);
             return false;
         }
         return true;
@@ -46,7 +52,7 @@ public class BitCashApi {
 
     /**
      * 创建新地址
-     * @return 新创建的地址
+     * @return
      */
     public String createNewAddress(String account){
         account = "";

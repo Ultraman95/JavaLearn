@@ -1,7 +1,8 @@
 package com.nxquant.exchange.wallet.etc;
 
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
-import com.nxquant.exchange.wallet.model.*;
+import com.nxquant.exchange.wallet.model.BlockInfo;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class EtcApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static Logger logger = LoggerFactory.getLogger(EtcApi.class);
     private JsonRpcHttpClient client = null;
     private String errorMsg = "";
     private static BigDecimal ETHER = new BigDecimal("1000000000000000000"); //E18
@@ -237,7 +238,7 @@ public class EtcApi {
         map.put("to",toAddress);
 
         if(fee.doubleValue() > 0 && fee.doubleValue() < 1 ){
-            long gas = 21000; //21000
+            long gas = 90000; //90000
             BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_HALF_UP );
             String gasPriceHex = getHexString(gasPriceWei.longValue());
             String gasHex = getHexString(gas);

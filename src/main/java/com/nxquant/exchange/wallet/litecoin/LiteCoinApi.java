@@ -9,16 +9,19 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.nxquant.exchange.wallet.model.BlockInfo;
+import com.nxquant.exchange.wallet.model.LiteAddressModel;
+import com.nxquant.exchange.wallet.model.UnSpentInf;
+
 import org.apache.commons.codec.binary.Base64;
 
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
 
-import com.nxquant.exchange.wallet.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LiteCoinApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static Logger logger = LoggerFactory.getLogger(LiteCoinApi.class);
 
     private JsonRpcHttpClient client = null;
     private String errorMsg = "";

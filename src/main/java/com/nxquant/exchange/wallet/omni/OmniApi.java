@@ -1,7 +1,7 @@
 package com.nxquant.exchange.wallet.omni;
-
+import com.nxquant.exchange.wallet.model.BlockInfo;
+import com.nxquant.exchange.wallet.model.UnSpentInf;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
-import com.nxquant.exchange.wallet.model.*;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class OmniApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static Logger logger = LoggerFactory.getLogger(OmniApi.class);
     private JsonRpcHttpClient client = null;
     private String errorMsg = "";
     private static Base64 base64 = new Base64();
@@ -186,7 +186,7 @@ public class OmniApi {
      * 查询钱包所有未花费数量
      * @return
      */
-    public ArrayList<UnSpentInf> listAllUnSpent(int minConfirom ){
+    public ArrayList<UnSpentInf> listAllUnSpent(  int minConfirom ){
         ArrayList<LinkedHashMap>  result;
         try{
             result = (ArrayList<LinkedHashMap> )client.invoke("listunspent",new Object[]{minConfirom}, Object.class);
@@ -311,6 +311,28 @@ public class OmniApi {
         Object result;
         try{
             result = client.invoke("omni_send",new Object[]{fromAddress, destAddress, propertyid, amountstr}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            logger.info(ex.getMessage());
+            return  null;
+        }
+        return result.toString();
+    }
+
+    /**
+     * 向特定地址转账并制定费用地址
+     * @param fromAddress
+     * @param destAddress
+     * @param feeAddress 指定费用地址
+     * @param amount
+     * @param  propertyid, 目前测试为1， 公网31 为USDT
+     * @return  返回txid, 如果失败返回null
+     */
+    public String transfer(String fromAddress, String destAddress, String feeAddress, double amount, int propertyid){
+        String amountstr = String.valueOf(amount);
+        Object result;
+        try{
+            result = client.invoke("omni_funded_send",new Object[]{fromAddress, destAddress, propertyid, amountstr, feeAddress}, Object.class);
         }catch(Throwable ex) {
             setErrorMsg(ex.getMessage());
             logger.info(ex.getMessage());

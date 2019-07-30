@@ -1,21 +1,19 @@
 package com.nxquant.exchange.wallet.ripple;
 
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
-import com.nxquant.exchange.wallet.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import com.nxquant.exchange.wallet.model.BlockInfo;
+import com.nxquant.exchange.wallet.model.RippleAccountModel;
 
 public class RippleApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
     private JsonRpcHttpClient client = null;
     private String errorMsg = "";
     private double XRP_UNIT = 1000000;
@@ -88,7 +86,7 @@ public class RippleApi {
     }
 
     /**
-     * @return 最新验证成功的区块高度(ledger_index in ripple context)
+     * @return 最新验证成功的区块高度(ledger_index in com.unifex.chainapi.ripple context)
      */
     public long getLatestBlockNum() {
         LedgerInfo resp = new LedgerInfo();

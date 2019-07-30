@@ -1,55 +1,65 @@
 package com.nxquant.exchange.wallet.bitcoin;
 
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.nxquant.exchange.wallet.model.AddressModel;
+import com.nxquant.exchange.wallet.model.BlockInfo;
+import com.nxquant.exchange.wallet.model.BtcBlockInfo;
+import com.nxquant.exchange.wallet.model.UnSpentInf;
 
 import org.apache.commons.codec.binary.Base64;
+
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.nxquant.exchange.wallet.model.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
-/**
- * @author shilf
- * BCH--比特币
- */
 @Lazy
 @Component
 public class BitCoinApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
-	private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static Logger logger = LoggerFactory.getLogger(BitCoinApi.class);
 
     private JsonRpcHttpClient client = null;
     private String errorMsg = "";
     private static Base64 base64 = new Base64();
 
-    public BitCoinApi(@Value("${com.nxquant.wallet.btc.user}") String user, @Value("${com.nxquant.wallet.btc.pwd}")String pwd, @Value("${com.nxquant.wallet.btc.rpcAddress}")String rpcAddress){
-        createClient(user, pwd, rpcAddress);
+    public BitCoinApi(@Value("${com.nxquant.wallet.btc.user}") String user, @Value("${com.nxquant.wallet.btc.pwd}")String pwd, @Value("rpcAddress")String rpcAddress){
+        createConnection(user, pwd, rpcAddress);
     }
 
+    public BitCoinApi(){
+
+    }
 
     /**
-     * 创建与bitcoind交互的rpcClient
+     * 与bitcoind 建立RPC连接
      * @param user 用户
      * @param pwd 密码
-     * @param rpcAddress 地址http://127.0.0.1:18883
+     * @param rpcAddress 地址http://localhost:8080
      * @return 是否新建成功
      */
-    Boolean createClient(String user, String pwd, String rpcAddress){
+    public Boolean createConnection(String user, String pwd, String rpcAddress){
+        //String cred =  Base64.encode( (user+ ":" +pwd).getBytes() );
+        String cred =   base64.encodeToString((user+ ":" +pwd).getBytes());
+        Map<String, String> headers = new HashMap<String, String>(1);
+        headers.put("Authorization", "Basic " + cred);
         try{
-            String cred =   base64.encodeToString((user+ ":" +pwd).getBytes());
-            Map<String, String> headers = new HashMap<String, String>(1);
-            headers.put("Authorization", "Basic " + cred);
             client = new JsonRpcHttpClient(new URL(rpcAddress),headers);
+        }catch(MalformedURLException ex){
+            System.out.println(ex);
+            return false;
         }catch(Exception ex) {
-            logger.error("Error:BitCoinApi--createConnection !" + ex);
+            System.out.println(ex);
             return false;
         }
         return true;
@@ -57,76 +67,93 @@ public class BitCoinApi {
 
     /**
      * 创建新地址
-     * @param reqInfo 请求参数
-     * @return 新创建的地址
+     * @param account  默认为""
+     * @return
      */
-    public String createNewAddress(CreateAddressReqInfo reqInfo){
-        String result;
+    public String createNewAddress(String  account){
+        if(StringUtils.isEmpty(account)) {
+            account = "";
+        }
+
+        Object result;
         try{
-            result = client.invoke(BitCoinRpcMethod.GET_NEW_ADDRESS, reqInfo, String.class);
+            result = client.invoke("getnewaddress",new Object[]{account}, Object.class);
         }catch(Throwable ex) {
-            System.out.println("result ---> " + ex.getMessage());
             setErrorMsg(ex.getMessage());
             return  null;
         }
-        System.out.println("result ---> " + result);
-        return result;
+        return result.toString();
+    }
+
+    /**
+     * 导入地址
+     * @param address
+     * @return
+     */
+    public Boolean importAddress(String address){
+        if(StringUtils.isEmpty(address)) {
+            return false;
+        }
+
+        try{
+            Object result = (LinkedHashMap<String,Object>)client.invoke("importaddress",new Object[]{address,"", false}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            return null;
+        }
+
+        return true;
     }
 
     /**
      * 验证地址是否有效
-     * @param reqInfo 请求参数
+     * @param address 待验证地址
      * @return  是否正确
      */
-    public Boolean validateAddress(ValidateAddressReqInfo reqInfo){
-        ValidateAddressRspInfo result;
-        try{
-            result = client.invoke(BitCoinRpcMethod.VALIDATE_ADDRESS, reqInfo, ValidateAddressRspInfo.class);
-        }catch(Throwable ex) {
-            System.out.println("result ---> " + ex.getMessage());
-            setErrorMsg(ex.getMessage());
-            return null;
+    public Boolean validateAddress(String address){
+        if(StringUtils.isEmpty(address)) {
+            return false;
         }
-        return result.getIsvalid();
-    }
 
-    /**
-     * 获取最新的地址高度
-     * @return 最新区块高度
-     */
-    public Long getLatestBlockHeight(){
-        Long result;
+        LinkedHashMap<String,Object> result= new LinkedHashMap<String,Object>();
         try{
-            result =  client.invoke(BitCoinRpcMethod.GET_BLOCKCOUNT,null, Long.class);
-        } catch(Throwable ex) {
-            setErrorMsg(ex.getMessage());
-            return null;
-        }
-        return result;
-    }
-
-    /**
-     * 获取区块的hash值
-     * @param blockHeight 区块高度
-     * @return  区块的hash值
-     */
-    private String getBlockHash(long blockHeight){
-        String blockHeadHash;
-        try{
-            blockHeadHash = client.invoke(BitCoinRpcMethod.GET_BLOCKHASH,new Object[]{blockHeight}, String.class);
+            result = (LinkedHashMap<String,Object>)client.invoke("validateaddress",new Object[]{address}, Object.class);
         }catch(Throwable ex) {
             setErrorMsg(ex.getMessage());
             return  null;
         }
-        return blockHeadHash;
+        Boolean isvalid =  (Boolean)result.get("isvalid");
+        return isvalid;
     }
 
     /**
-     * 获取区块信息
-     * @param blockHeadHash 区块头hash
-     * @return 区块信息
+     * 获取最新的地址高度
+     * @return
      */
-    private LinkedHashMap getBlock( String blockHeadHash){
+    public long getLatestBlockNum(){
+        Integer result;
+        try{
+            result =  (Integer)client.invoke("getblockcount",new Object[]{}, Object.class);
+        } catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            return  -1;
+        }
+        return result;
+    }
+
+    private String getblockhash(long blockNum){
+        String blockHeadHash;
+        try{
+            blockHeadHash = (String)client.invoke("getblockhash",new Object[]{blockNum}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            return  null;
+        }
+
+        return blockHeadHash;
+    }
+
+    private LinkedHashMap getblock( String blockHeadHash){
         LinkedHashMap result;
         try{
             result = (LinkedHashMap)client.invoke("getblock",new Object[]{blockHeadHash}, Object.class);
@@ -143,13 +170,248 @@ public class BitCoinApi {
      * @return
      */
     public ArrayList<BlockInfo> getBlockByNumber(long blockNum){
-        String blockHeadHash = getBlockHash(blockNum);
+        String blockHeadHash = getblockhash(blockNum);
         if(blockHeadHash == null)
         {
             return null;
         }
 
-        LinkedHashMap result =  getBlock(blockHeadHash);
+        LinkedHashMap result =  getblock(blockHeadHash);
+        if(result == null)
+        {
+            return null;
+        }
+
+        Integer height = (Integer)result.get("height");
+        ArrayList<BlockInfo> BlockInfos = new ArrayList<BlockInfo>();
+        ArrayList<String> transactions = (ArrayList<String>)result.get("tx");
+
+        for(int i=0; i<transactions.size(); i++){
+            String txid = (String)transactions.get(i);
+            LinkedHashMap txidInfo;
+            try{
+                txidInfo = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txid, true}, Object.class);
+            }catch(Throwable ex) {
+                setErrorMsg(ex.getMessage());
+                logger.info("["+txid+"]"+ex.getMessage());
+                continue;
+            }
+
+            double sumin = 0;
+            ArrayList<LinkedHashMap> vins = ( ArrayList<LinkedHashMap>)txidInfo.get("vin");
+            for(int j=0; j<vins.size(); j++){
+                LinkedHashMap vin = vins.get(j);
+                String txidin = (String) vin.get("txid");
+                if(txidin == null) {
+                    continue;
+                }
+                Integer vout = (Integer) vin.get("vout");
+
+                LinkedHashMap txidInfoin;
+                try{
+                    txidInfoin = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txidin,true}, Object.class);
+                }catch(Throwable ex) {
+                    setErrorMsg(ex.getMessage());
+                    logger.info("["+txid+"]"+ex.getMessage());
+                    continue;
+                }
+
+                ArrayList<LinkedHashMap> vouts = ( ArrayList<LinkedHashMap>)txidInfoin.get("vout");
+                for(int t=0;t<vouts.size(); t++){
+                    LinkedHashMap vinout = vouts.get(t);
+                    Integer n = (Integer)vinout.get("n");
+                    if(n.intValue() == vout.intValue()){
+                        sumin += (Double)vinout.get("value");
+                    }
+                }
+            }
+
+            int startCal = BlockInfos.size();
+            double sumout = 0;
+            ArrayList<LinkedHashMap> vouts = ( ArrayList<LinkedHashMap>)txidInfo.get("vout");
+            for(int j=0; j<vouts.size(); j++){
+                LinkedHashMap vout = vouts.get(j);
+                Double value = (Double)vout.get("value");
+                sumout += value;
+                LinkedHashMap scriptPubKey = (LinkedHashMap)vout.get("scriptPubKey");
+                if(scriptPubKey == null)
+                {
+                    continue;
+                }
+
+                ArrayList<String> addresses = ( ArrayList<String>)scriptPubKey.get("addresses");
+                if(addresses == null)
+                {
+                    continue;
+                }
+
+                BlockInfo blockInfo = new BlockInfo();
+                if(addresses.size() > 0 )
+                {
+                    blockInfo.setToAddress(addresses.get(0)); //目前只考虑一个地址转账操作
+                }
+
+                blockInfo.setTxid(txid);
+                blockInfo.setBlockNo(height);
+                blockInfo.setValue(value);
+                BlockInfos.add(blockInfo);
+            }
+
+            for(int n =startCal;n <BlockInfos.size();n ++) {
+                if(sumin > sumout) {
+                    BlockInfos.get(n).setFee(sumin - sumout);
+                }
+            }
+        }
+
+        return BlockInfos;
+    }
+
+    public LinkedHashMap getBlock(long blockNum){
+        String blockHeadHash = getblockhash(blockNum);
+        if(blockHeadHash == null)
+        {
+            return null;
+        }
+
+        LinkedHashMap result =  getblock(blockHeadHash);
+        if(result == null)
+        {
+            return null;
+        }
+
+        return result;
+    }
+
+    /**
+     * BTC 区块解析2.0版本，改成多对多输出
+     * @param blockNum
+     * @return
+     */
+    public ArrayList<BtcBlockInfo> getBlockByNumber2(long blockNum){
+        LinkedHashMap result = getBlock(blockNum);
+        if(result == null)
+        {
+            return null;
+        }
+
+        Integer height = (Integer)result.get("height");
+        ArrayList<BtcBlockInfo> BlockInfos = new ArrayList<BtcBlockInfo>();
+        ArrayList<String> transactions = (ArrayList<String>)result.get("tx");
+
+        for(int i=0; i<transactions.size(); i++){
+            String txid = (String)transactions.get(i);
+            LinkedHashMap txidInfo;
+            try{
+                txidInfo = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txid, true}, Object.class);
+            }catch(Throwable ex) {
+                setErrorMsg(ex.getMessage());
+                logger.info("["+txid+"]"+ex.getMessage());
+                continue;
+            }
+
+            BtcBlockInfo btcBlockInfo = new BtcBlockInfo();
+            ArrayList<LinkedHashMap> vins = ( ArrayList<LinkedHashMap>)txidInfo.get("vin");
+            for(int j=0; j<vins.size(); j++){
+                LinkedHashMap vin = vins.get(j);
+                String txidin = (String) vin.get("txid");
+                if(txidin == null) {
+                    continue;
+                }
+                Integer vout = (Integer) vin.get("vout");
+
+                LinkedHashMap txidInfoin;
+                try{
+                    txidInfoin = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txidin,true}, Object.class);
+                }catch(Throwable ex) {
+                    setErrorMsg(ex.getMessage());
+                    logger.info("["+txid+"]"+ex.getMessage());
+                    continue;
+                }
+
+                ArrayList<LinkedHashMap> vouts = ( ArrayList<LinkedHashMap>)txidInfoin.get("vout");
+                for(int t=0;t<vouts.size(); t++){
+                    LinkedHashMap vinout = vouts.get(t);
+                    Integer n = (Integer)vinout.get("n");
+                    if(n.intValue() == vout.intValue()){
+                       LinkedHashMap sPubKey = (LinkedHashMap)vinout.get("scriptPubKey");
+                       if(sPubKey != null){
+                            ArrayList<String> addres = ( ArrayList<String>)sPubKey.get("addresses");
+                            if(addres == null || addres.size() <=0 )
+                            {
+                                continue;
+                            }
+
+                           Double value = (Double)vinout.get("value");
+                           if(value != null){
+                               btcBlockInfo.addFromValue(addres.get(0), value);
+                           }
+                       }
+                    }
+                }
+            }
+
+            ArrayList<LinkedHashMap> vouts = ( ArrayList<LinkedHashMap>)txidInfo.get("vout");
+            for(int j=0; j<vouts.size(); j++){
+                LinkedHashMap vout = vouts.get(j);
+                LinkedHashMap scriptPubKey = (LinkedHashMap)vout.get("scriptPubKey");
+                if(scriptPubKey == null)
+                {
+                    continue;
+                }
+
+                ArrayList<String> addresses = ( ArrayList<String>)scriptPubKey.get("addresses");
+                if(addresses == null)
+                {
+                    continue;
+                }
+
+                if(addresses.size() > 0 )
+                {
+                    Double value = (Double)vout.get("value");
+                    if(value ==null){
+                        continue;
+                    }
+                    btcBlockInfo.addToValue(addresses.get(0), value);
+                }
+            }
+
+            double inValue = 0;
+            double outValue = 0;
+            for (String key : btcBlockInfo.getFromValue().keySet()){
+                inValue += btcBlockInfo.getFromValue().get(key);
+            }
+
+            for (String key : btcBlockInfo.getToValue().keySet()){
+                outValue += btcBlockInfo.getToValue().get(key);
+            }
+
+            if(inValue > outValue){
+                btcBlockInfo.setFee(inValue-outValue);
+            } else {
+                btcBlockInfo.setFee(0);
+            }
+
+            btcBlockInfo.setTxid(txid);
+            btcBlockInfo.setBlockNo(height);
+            BlockInfos.add(btcBlockInfo);
+        }
+        return BlockInfos;
+    }
+
+    /**
+     * 获取指定区块信息 测试用
+     * @param blockNum
+     * @return
+     */
+    public ArrayList<BlockInfo> getBlockByNumberWithoutAnaForTest(long blockNum){
+        String blockHeadHash = getblockhash(blockNum);
+        if(blockHeadHash == null)
+        {
+            return null;
+        }
+
+        LinkedHashMap result = getblock(blockHeadHash);
         if(result == null)
         {
             return null;
@@ -157,49 +419,29 @@ public class BitCoinApi {
 
         Integer height = (Integer)result.get("height");
 
-        ArrayList<BlockInfo> blockInfoList = new ArrayList<BlockInfo>();
+        ArrayList<BlockInfo> BlockInfos = new ArrayList<BlockInfo>();
 
         ArrayList<String> transactions = (ArrayList<String>)result.get("tx");
         for(int i=0; i<transactions.size(); i++){
-            String txId = transactions.get(i);
-            LinkedHashMap txInfo;
+            String txid = (String)transactions.get(i);
+            LinkedHashMap txidInfo;
+            long start = System.currentTimeMillis();
+            System.out.println("----------------  start test2 --------------");
             try{
-                txInfo = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txId,true}, Object.class);
+                txidInfo = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txid,true}, Object.class);
             }catch(Throwable ex) {
                 setErrorMsg(ex.getMessage());
-                logger.info("["+txId+"]"+ex.getMessage());
+              //  logger.info("["+txid+"]"+ex.getMessage());
+                long end = System.currentTimeMillis();
+                System.out.println("cost:" + (end - start));
                 continue;
             }
 
-            ArrayList<LinkedHashMap> vOutList = ( ArrayList<LinkedHashMap>)txInfo.get("vout");
-            for(int j=0; j<vOutList.size(); j++){
-
-                LinkedHashMap vOut = vOutList.get(j);
-                Double value = (Double)vOut.get("value");
-                LinkedHashMap scriptPubKey = (LinkedHashMap)vOut.get("scriptPubKey");
-                if(scriptPubKey == null)
-                {
-                    continue;
-                }
-
-                ArrayList<String> addresses = (ArrayList<String>)scriptPubKey.get("addresses");
-                if(addresses == null)
-                {
-                    continue;
-                }
-                BlockInfo blockInfo = new BlockInfo();
-                if(addresses.size() > 0 )
-                {
-                    //目前只考虑一个地址转账操作
-                    blockInfo.setToAddress(addresses.get(0));
-                }
-                blockInfo.setTxid(txId);
-                blockInfo.setBlockNo(height);
-                blockInfo.setValue(value);
-                blockInfoList.add(blockInfo);
-            }
+            long end = System.currentTimeMillis();
+            System.out.println("cost:" + (end - start));
         }
-        return blockInfoList;
+
+        return BlockInfos;
     }
 
     /**
@@ -437,11 +679,10 @@ public class BitCoinApi {
      * 查询钱包所有未花费数量
      * @return
      */
-    public ArrayList<UnSpentInf> listAllUnSpent(){
-        int minConfirom = 1;
+    public ArrayList<UnSpentInf> listAllUnSpent(  int minConfirom ){
         ArrayList<LinkedHashMap>  result;
         try{
-            result = (ArrayList<LinkedHashMap> )client.invoke("listunspent",new Object[]{minConfirom}, Object.class);
+            result = (ArrayList<LinkedHashMap> )client.invoke("listunspent",new Object[]{minConfirom, 999999999}, Object.class);
         }catch(Throwable ex) {
             setErrorMsg(ex.getMessage());
             logger.info(ex.getMessage());
@@ -484,18 +725,22 @@ public class BitCoinApi {
      * @param fee
      * @return
      */
-    public String  createRawtransaction(String toAddress, String refundAddress,  UnSpentInf unSpentInf,  double amount, double fee){
+    public String  createRawtransaction(String toAddress, String refundAddress, ArrayList<UnSpentInf> unSpentInf, double amount, double fee){
 
         ArrayList<  Map<String, Object> > txidList = new  ArrayList<  Map<String, Object> >();
-        Map<String, Object> map1 = new HashMap<String, Object>();
-        map1.put("txid",unSpentInf.getTxid());
-        map1.put("vout", unSpentInf.getVout());
-        txidList.add(map1);
+        double unspentAmount = 0;
+        for(int i=0; i<unSpentInf.size(); i++){
+            Map<String, Object> map1 = new HashMap<String, Object>();
+            map1.put("txid",unSpentInf.get(i).getTxid());
+            map1.put("vout", unSpentInf.get(i).getVout());
+            txidList.add(map1);
+            unspentAmount += unSpentInf.get(i).getAmount();
+        }
 
         Map<String, Object> map2 = new HashMap<String, Object>();
         map2.put(toAddress,amount);
 
-        BigDecimal bg = new BigDecimal(unSpentInf.getAmount() - amount - fee);
+        BigDecimal bg = new BigDecimal(unspentAmount - amount - fee);
         double f1 = bg.setScale(6, BigDecimal.ROUND_HALF_UP).doubleValue();
         map2.put(refundAddress, f1);
 
@@ -518,17 +763,21 @@ public class BitCoinApi {
      * @param privateKeyList
      * @return
      */
-    public String signRawtransaction(String rawTransaction, UnSpentInf unSpentInf, ArrayList<String>  privateKeyList){
+    public String signRawtransaction(String rawTransaction, ArrayList<UnSpentInf> unSpentInf, ArrayList<String>  privateKeyList){
         ArrayList<  Map<String, Object> > txidList = new  ArrayList<  Map<String, Object> >();
-        Map<String, Object> map1 = new HashMap<String, Object>();
-        map1.put("txid",unSpentInf.getTxid());
-        map1.put("vout", unSpentInf.getVout());
-        map1.put("scriptPubKey", unSpentInf.getScriptPubKey());
-        map1.put("redeemScript", unSpentInf.getRedeemScript());
-        txidList.add(map1);
+        for(int i=0; i<unSpentInf.size(); i++)
+        {
+            Map<String, Object> map1 = new HashMap<String, Object>();
+            map1.put("txid",unSpentInf.get(i).getTxid());
+            map1.put("vout", unSpentInf.get(i).getVout());
+            map1.put("scriptPubKey", unSpentInf.get(i).getScriptPubKey());
+            map1.put("redeemScript", unSpentInf.get(i).getRedeemScript());
+            map1.put("amount", unSpentInf.get(i).getAmount());
+            txidList.add(map1);
+        }
 
         LinkedHashMap result;
-        if(privateKeyList.size() >0 && unSpentInf.getRedeemScript() == ""){
+        if(privateKeyList.size() >0 && unSpentInf.get(0).getRedeemScript() == ""){
             try{
                 result = (LinkedHashMap)client.invoke("signrawtransaction",new Object[]{rawTransaction, txidList, privateKeyList}, Object.class);
             }catch(Throwable ex) {
@@ -538,7 +787,7 @@ public class BitCoinApi {
             }
         } else {
             try{
-                result = (LinkedHashMap)client.invoke("signrawtransaction",new Object[]{rawTransaction}, Object.class);
+                result = (LinkedHashMap)client.invoke("signrawtransaction",new Object[]{rawTransaction, txidList}, Object.class);
             }catch(Throwable ex) {
                 setErrorMsg(ex.getMessage());
                 logger.info(ex.getMessage());
@@ -582,13 +831,71 @@ public class BitCoinApi {
         return result.toString();
     }
 
+    public  ArrayList<String>  getAllTransactions(){
+        LinkedHashMap result;
+        try{
+            result =  (LinkedHashMap)client.invoke("listsinceblock",new Object[]{}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            logger.info(ex.getMessage());
+            return  null;
+        }
+
+        ArrayList<String> txidRes = new  ArrayList<String>();
+        ArrayList<LinkedHashMap> txids = (ArrayList) result.get("transactions");
+        for(LinkedHashMap txidmap : txids){
+            String res = txidmap.get("txid") + "," + txidmap.get("address");
+            txidRes.add(res);
+        }
+        return  txidRes;
+    }
+
+    public  String getTransaction(String txid){
+        String result;
+        try{
+            result =  (String)client.invoke("getrawtransaction",new Object[]{txid}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            logger.info(ex.getMessage());
+            return  null;
+        }
+
+        return  result;
+    }
+
+    /**
+     * 手续费设置，每KB字节BTC
+     * @param feePerKb
+     * @return
+     */
+    public Boolean setTxFee(double feePerKb){
+        boolean result;
+        try{
+            result = (Boolean)client.invoke("settxfee",new Object[]{feePerKb}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            logger.info(ex.getMessage());
+            return  null;
+        }
+        return  result;
+    }
+
     /**
      * 向特定地址转账
      * @param destAddress
      * @param amount
+     * @param feePerKb
      * @return  返回txid, 如果失败返回null
      */
-    public String transfer(String destAddress, double amount){
+    public String transfer(String destAddress, double amount, double feePerKb){
+        if (feePerKb >= 0 ){
+            Boolean bres = setTxFee(feePerKb);
+            if(bres == null|| bres.booleanValue() == false ){
+                setErrorMsg("set tx fee error");
+                return  null;
+            }
+        }
+
         Object result;
         try{
             result = client.invoke("sendtoaddress",new Object[]{destAddress,amount}, Object.class);
@@ -599,102 +906,6 @@ public class BitCoinApi {
         }
         return result.toString();
     }
-
-	/**
-	 * 获取指定交易的状态
-	 * @param txid
-	 * @return
-	 */
-	public LinkedHashMap getTranserStatus(String txid) {
-		LinkedHashMap txidInfo = null;
-
-		try{
-			txidInfo = (LinkedHashMap)client.invoke("getrawtransaction",new Object[]{txid,true}, Object.class);
-		}catch(Throwable ex) {
-			setErrorMsg(ex.getMessage());
-			logger.info("["+txid+"]"+ex.getMessage());
-		}
-
-		return txidInfo;
-	}
-
-	/**
-	 * 获取指定交易的状态
-	 * @param txid
-	 * @return
-	 */
-	public LinkedHashMap getTransaction(String txid) {
-		LinkedHashMap txidInfo = null;
-
-		try{
-			txidInfo = (LinkedHashMap)client.invoke("gettransaction",new Object[]{txid,true}, Object.class);
-		}catch(Throwable ex) {
-			setErrorMsg(ex.getMessage());
-			logger.info("["+txid+"]"+ex.getMessage());
-		}
-
-		return txidInfo;
-	}
-
-	public ArrayList<TxDetail> queryTxDetailByBlock(long blockNum){
-		String blockHeadHash = getBlockHash(blockNum);
-		if(blockHeadHash == null) {
-            return null;
-        }
-
-		LinkedHashMap result =  getBlock(blockHeadHash);
-		if(result == null) {
-            return null;
-        }
-
-		Integer height = (Integer)result.get("height");
-
-		ArrayList<TxDetail> TxDetails = new ArrayList<TxDetail>();
-
-		ArrayList<String> transactions = (ArrayList<String>)result.get("tx");
-		for(int i=0; i<transactions.size(); i++){
-			String txid = (String)transactions.get(i);
-			LinkedHashMap txidInfo;
-			try{
-				txidInfo = (LinkedHashMap)client.invoke("gettransaction",new Object[]{txid,true}, Object.class);
-			}catch(Throwable ex) {
-				setErrorMsg(ex.getMessage());
-				logger.info("["+txid+"]"+ex.getMessage());
-				continue;
-			}
-
-            ArrayList<LinkedHashMap> details = ( ArrayList<LinkedHashMap>)txidInfo.get("details");
-
-			for(int j = 0;j<details.size();j++){
-                LinkedHashMap detail = (LinkedHashMap)details.get(j);
-                TxDetail txDetail = new TxDetail();
-
-                txDetail.setTxId(txid);
-                txDetail.setBlockHash(txidInfo.get("blockhash").toString());
-                txDetail.setBlockHeight(blockNum);
-                txDetail.setConfirmations(Integer.parseInt(txidInfo.get("confirmations").toString()));
-                txDetail.setCategory(detail.get("category").toString());
-                txDetail.setTxAmount(BigDecimal.valueOf(Math.abs(Double.valueOf(detail.get("amount").toString()))));
-                if(detail.containsKey("fee")) {
-                    txDetail.setTxFee(BigDecimal.valueOf(Math.abs(Double.valueOf(detail.get("fee").toString()))));
-                }
-                else {
-                    txDetail.setTxFee(BigDecimal.valueOf(0));
-                }
-                txDetail.setToAddress(detail.get("address").toString());
-
-                String timeStamp = txidInfo.get("timereceived").toString();
-				long nTime = Long.valueOf(timeStamp) * 1000L;
-				Date dt = new Date(nTime);
-                txDetail.setTxReceiveTime(simpleDateFormat.format(dt));
-
-                TxDetails.add(txDetail);
-            }
-
-		}
-
-		return TxDetails;
-	}
 
     public String getErrorMsg() {
         return errorMsg;

@@ -1,6 +1,6 @@
 package com.nxquant.exchange.service;
 
-import com.nxquant.exchange.test.TestUtil;
+import com.nxquant.exchange.exp.TestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

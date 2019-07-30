@@ -1,6 +1,5 @@
 package com.nxquant.exchange.wallet.model;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class BlockInfo {
@@ -64,12 +63,30 @@ public class BlockInfo {
         isContractTx = contractTx;
     }
 
+    public String getFromAddress() {
+        return fromAddress;
+    }
+
+    public void setFromAddress(String fromAddress) {
+        this.fromAddress = fromAddress;
+    }
+
+    public double getFee() {
+        return fee;
+    }
+
+    public void setFee(double fee) {
+        this.fee = fee;
+    }
+
     private String txid;
     private long blockNo;
     private double value;
+    private String fromAddress;
     private String toAddress;
     private String contractAddress;
     private BigInteger contractValue;
+    private double fee;
     private boolean isContractTx;
     //资产类型31为USDT
     private Long propertyID;

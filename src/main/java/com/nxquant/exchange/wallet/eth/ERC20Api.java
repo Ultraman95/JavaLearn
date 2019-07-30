@@ -92,10 +92,10 @@ public class ERC20Api {
             return  null;
         }
 
-        if(result.toString().length() <= 2){
-            BigInteger balance = new BigInteger("0");
-            return balance;
-        }
+       if(result.toString().length() <= 2){
+           BigInteger balance = new BigInteger("0");
+           return balance;
+       }
 
         String balancestr = new BigInteger(result.toString().substring(2), 16).toString(10);
         BigInteger balance = new BigInteger(balancestr);
@@ -119,7 +119,8 @@ public class ERC20Api {
 
         if(fee.doubleValue() > 0 && fee.doubleValue() < 1 ){
             long gas = 90000; //90000
-            BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_HALF_UP );
+            //BigDecimal gasPriceWei1 = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_HALF_UP);
+            BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_DOWN);
             String gasPriceHex = ethApi.getHexString(gasPriceWei.longValue());
             String gasHex = ethApi.getHexString(gas);
             map.put("gas",gasHex);
@@ -214,7 +215,7 @@ public class ERC20Api {
      * @param amount
      * @return
      */
-    public String transferFrom(String fromAddress, String contractAddress, String srcAddress, String destAddress ,BigInteger amount, Double fee){
+   public String transferFrom(String fromAddress, String contractAddress, String srcAddress, String destAddress ,BigInteger amount, Double fee){
         Map<String, Object> map = new HashMap<String, Object>();
         map.put("from",fromAddress);
         map.put("to", contractAddress);
@@ -222,14 +223,14 @@ public class ERC20Api {
         String parameterSrcAddress = formatParameter(srcAddress.substring(2));
         String parameterDestAddress = formatParameter(destAddress.substring(2));
 
-        if(fee.doubleValue() > 0 && fee.doubleValue() < 1 ){
-            long gas = 90000; //90000
-            BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_HALF_UP );
-            String gasPriceHex = ethApi.getHexString(gasPriceWei.longValue());
-            String gasHex = ethApi.getHexString(gas);
-            map.put("gas",gasHex);
-            map.put("gasPrice",gasPriceHex);
-        }
+       if(fee.doubleValue() > 0 && fee.doubleValue() < 1 ){
+           long gas = 90000; //90000
+           BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_HALF_UP );
+           String gasPriceHex = ethApi.getHexString(gasPriceWei.longValue());
+           String gasHex = ethApi.getHexString(gas);
+           map.put("gas",gasHex);
+           map.put("gasPrice",gasPriceHex);
+       }
 
         String bigAmountStr =   new BigInteger(amount.toString() , 10).toString(16);
         String parameterAmount = formatParameter(String.valueOf(bigAmountStr));
@@ -344,7 +345,7 @@ public class ERC20Api {
      * @param parameter
      * @return
      */
-    private String formatParameter(String parameter){
+   private String formatParameter(String parameter){
         int totalLen = 64;
         int parameterLen = parameter.length();
         String parameter_s = "";

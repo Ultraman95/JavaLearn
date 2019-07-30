@@ -1,7 +1,8 @@
 package com.nxquant.exchange.wallet.eth;
 
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
-import com.nxquant.exchange.wallet.model.*;
+import com.nxquant.exchange.wallet.model.BlockInfo;
+import com.nxquant.exchange.wallet.model.Receipt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,16 +10,17 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class EthApi {
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private static Logger logger = LoggerFactory.getLogger(EthApi.class);
     private JsonRpcHttpClient client = null;
     private String errorMsg = "";
     private static BigDecimal ETHER = new BigDecimal("1000000000000000000"); //E18
     private static long GWEI =  1000000000;
-	private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     /**
      * ETH 建立RPC连接
      * @param rpcAddress 地址http://localhost:8080
@@ -116,17 +118,29 @@ public class EthApi {
             BlockInfo blockInfo = new BlockInfo();
             String txid = (String)transactions.get(i).get("hash");
             String toaddress = (String)transactions.get(i).get("to");
+            String fromaddress = (String)transactions.get(i).get("from");
 
             if(null == toaddress || "null" == toaddress)
             {
                 continue;
             }
+
+            if(null == fromaddress || "null" == fromaddress)
+            {
+                continue;
+            }
+
             blockInfo.setTxid(txid);
             blockInfo.setToAddress(toaddress);
+            blockInfo.setFromAddress(fromaddress);
 
             String input = (String)transactions.get(i).get("input");
-            analysisInput(blockInfo, input, toaddress);
+            analysisInput(blockInfo, input, toaddress, txid);
 
+            long gasPrice = getLongFromHex((String)transactions.get(i).get("gasPrice")) * (long)blockInfo.getFee();
+            BigDecimal fee = new BigDecimal(String.valueOf(gasPrice)).divide(ETHER);
+
+            blockInfo.setFee(fee.doubleValue());
             String value = (String)transactions.get(i).get("value");
             BigInteger weivalue = new BigInteger(value.substring(2), 16);
             BigDecimal ethvalue = new BigDecimal(weivalue).divide(ETHER);
@@ -138,11 +152,19 @@ public class EthApi {
         return BlockInfos;
     }
 
-    private void analysisInput(BlockInfo blockInfo, String input, String address){
+    private void analysisInput(BlockInfo blockInfo, String input, String address, String txid){
         int dist = 64;
         int addressLen = 40;
         blockInfo.setContractTx(false);
+        Receipt receipt = getReceipt(txid);
+        if(receipt == null){
+            return;
+        }
+
+        blockInfo.setFee(receipt.getGas());
+
         if(input.startsWith(Erc20MethodConstant.transfer)){
+            logger.debug(input);
             try{
                 String toAddress = "0x"+input.substring(Erc20MethodConstant.transfer.length() + (dist - addressLen), Erc20MethodConstant.transfer.length() + dist);
                 blockInfo.setToAddress(toAddress);
@@ -152,14 +174,18 @@ public class EthApi {
                 BigInteger weivalue = new BigInteger(hexValue, 16);
                 blockInfo.setContractValue(weivalue);
             }catch (Exception ex){
+                logger.warn(ex.getMessage());
+                blockInfo.setContractTx(false);
+                return;
+            }
+
+            if(receipt.getStatus()  == false){
                 blockInfo.setContractValue(new BigInteger("0"));
-                logger.error(ex.getMessage());
             }
 
             blockInfo.setContractTx(true);
-
         } else if(input.startsWith(Erc20MethodConstant.transferFrom)){
-            logger.info(input);
+            logger.debug(input);
             try{
                 String toAddress = "0x"+input.substring(Erc20MethodConstant.transfer.length() + (2*dist - addressLen), Erc20MethodConstant.transfer.length() + 2*dist);
                 blockInfo.setToAddress(toAddress);
@@ -169,8 +195,13 @@ public class EthApi {
                 BigInteger weivalue = new BigInteger(hexValue, 16);
                 blockInfo.setContractValue(weivalue);
             }catch (Exception ex){
+                logger.warn(ex.getMessage());
+                blockInfo.setContractTx(false);
+                return;
+            }
+
+            if(receipt.getStatus()  == false){
                 blockInfo.setContractValue(new BigInteger("0"));
-                logger.error(ex.getMessage());
             }
 
             blockInfo.setContractTx(true);
@@ -198,6 +229,15 @@ public class EthApi {
         BigDecimal gasbigdecimal = new BigDecimal(gas.toString());
         BigDecimal estvalue = gasbigdecimal.divide(ETHER);
         return estvalue;
+    }
+
+    private long getLongFromHex(String hex){
+        if(hex.length() <2 ){
+            return 0;
+        }
+        String ss = hex.toString().substring(2);
+        BigInteger bhex = new BigInteger(ss, 16);
+        return bhex.longValue();
     }
 
     /**
@@ -253,7 +293,7 @@ public class EthApi {
         Object result;
         try{
             result =  client.invoke("eth_estimateGas",new Object[]{map}, Object.class);
-        } catch(Throwable ex) {
+        }catch(Throwable ex) {
             setErrorMsg(ex.getMessage());
             return  null;
         }
@@ -279,8 +319,10 @@ public class EthApi {
         map.put("to",toAddress);
 
         if(fee.doubleValue() > 0 && fee.doubleValue() < 1 ){
+            logger.warn("fee:" + fee);
             long gas = 21000; //21000
-            BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_HALF_UP );
+            BigDecimal gasPriceWei = BigDecimal.valueOf(fee).multiply(ETHER).divide( BigDecimal.valueOf(gas),8,  BigDecimal.ROUND_DOWN );
+            logger.warn("gasPriceForWei:" + gasPriceWei);
             String gasPriceHex = getHexString(gasPriceWei.longValue());
             String gasHex = getHexString(gas);
             map.put("gas",gasHex);
@@ -311,6 +353,21 @@ public class EthApi {
         Object result;
         try{
             result =  client.invoke("eth_getTransactionCount",new Object[]{address, "pending"}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            return  -1;
+        }
+
+        String ss = result.toString().substring(2);
+        long nonce =  Long.parseLong(ss, 16);
+        return nonce;
+    }
+
+
+    public long getNoncelatest(String address){
+        Object result;
+        try{
+            result =  client.invoke("eth_getTransactionCount",new Object[]{address, "latest"}, Object.class);
         }catch(Throwable ex) {
             setErrorMsg(ex.getMessage());
             return  -1;
@@ -384,7 +441,7 @@ public class EthApi {
     public String sendSignTransaction(String signData){
         Object result;
         try{
-            result =  client.invoke("eth_sendRawTransaction",new Object[]{signData}, Object.class);
+            result =  (Object)client.invoke("eth_sendRawTransaction",new Object[]{signData}, Object.class);
         }catch(Throwable ex) {
             setErrorMsg(ex.getMessage());
             return  null;
@@ -392,133 +449,6 @@ public class EthApi {
 
         return result.toString();
     }
-
-    public LinkedHashMap getTransactionByTxid(String txid){
-		LinkedHashMap txidInfo = null;
-
-		try{
-			txidInfo =  (LinkedHashMap)client.invoke("eth_getTransactionByHash",new Object[]{txid}, Object.class);
-		}catch(Throwable ex) {
-			setErrorMsg(ex.getMessage());
-			return  null;
-		}
-
-		return txidInfo;
-	}
-
-	public ArrayList<TxDetail> queryTxDetailByBlock(long blockNum){
-
-		LinkedHashMap result;
-		String blockNumStr = getHexString(blockNum);
-		try{
-			result = (LinkedHashMap)client.invoke("eth_getBlockByNumber",new Object[]{blockNumStr,true}, Object.class);
-		}catch(Throwable ex) {
-			setErrorMsg(ex.getMessage());
-			logger.info(ex.getMessage());
-			return  null;
-		}
-
-		if(result == null)
-		{
-			setErrorMsg("unexpected error");
-			return null;
-		}
-
-		ArrayList<LinkedHashMap> transactions = (ArrayList<LinkedHashMap>)result.get("transactions");
-		ArrayList<TxDetail> TxDetails = new ArrayList<TxDetail>();
-
-		String timeStamp = String.valueOf(result.get("timestamp")).substring(2);
-		long nTime = Long.valueOf(timeStamp,16) * 1000L;
-		Date dt = new Date(nTime);
-		String sReceiveTime = simpleDateFormat.format(dt);
-
-		for(int i=0; i<transactions.size(); i++){
-			String txid = (String)transactions.get(i).get("hash");
-			String toaddress = (String)transactions.get(i).get("to");
-			if(null == toaddress || "null" == toaddress)
-				continue;
-			String value = (String)transactions.get(i).get("value");
-			String gas = (String)transactions.get(i).get("gas");
-			String gasPrice = (String)transactions.get(i).get("gasPrice");
-			long nGas = Long.parseLong(gas.substring(2),16);
-			long nGasPrice = Long.parseLong(gasPrice.substring(2),16);
-			BigDecimal fee = BigDecimal.valueOf(nGas * nGasPrice).divide(ETHER);
-
-			BigInteger weivalue = new BigInteger(value.substring(2), 16);
-			BigDecimal ethvalue = new BigDecimal(weivalue).divide(ETHER);
-
-			TxDetail txDetail = new TxDetail();
-			txDetail.setTxId(txid);
-			txDetail.setToAddress(toaddress);
-			txDetail.setTxAmount(ethvalue);
-			txDetail.setBlockHeight(blockNum);
-			txDetail.setBlockHash((String)transactions.get(i).get("blockHash"));
-			txDetail.setTxFee(fee);
-			txDetail.setTxReceiveTime(sReceiveTime);
-			txDetail.setCategory("");
-			txDetail.setConfirmations(0);
-
-			//判断是否是ERC20标准的合约
-			String input = (String)transactions.get(i).get("input");
-			analysisInputEx(txDetail, input, toaddress);
-
-
-			TxDetails.add(txDetail);
-		}
-
-		return TxDetails;
-
-	}
-
-	private void analysisInputEx(TxDetail txDetail, String input, String address){
-		int dist = 64;
-		int addressLen = 40;
-		txDetail.setContractTx(false);
-        Receipt receipt = getReceipt(txDetail.getTxId());
-        if(receipt == null){
-            return;
-        }
-
-		if(input.startsWith(Erc20MethodConstant.transfer)){
-			try{
-				String toAddress = "0x"+input.substring(Erc20MethodConstant.transfer.length() + (dist - addressLen), Erc20MethodConstant.transfer.length() + dist);
-				txDetail.setToAddress(toAddress);
-				txDetail.setContractAddress(address);
-
-				String hexValue = input.substring(Erc20MethodConstant.transfer.length() + dist);
-				BigInteger weivalue = new BigInteger(hexValue, 16);
-				txDetail.setContractValue(weivalue);
-			}catch (Exception ex){
-				txDetail.setContractValue(new BigInteger("0"));
-				logger.error(ex.getMessage());
-			}
-
-            if(receipt.getStatus()  == false){
-                txDetail.setContractValue(new BigInteger("0"));
-            }
-
-			txDetail.setContractTx(true);
-		} else if(input.startsWith(Erc20MethodConstant.transferFrom)){
-			logger.info(input);
-			try{
-				String toAddress = "0x"+input.substring(Erc20MethodConstant.transfer.length() + (2*dist - addressLen), Erc20MethodConstant.transfer.length() + 2*dist);
-				txDetail.setToAddress(toAddress);
-				txDetail.setContractAddress(address);
-
-				String hexValue = input.substring(Erc20MethodConstant.transfer.length() + 2*dist);
-				BigInteger weivalue = new BigInteger(hexValue, 16);
-				txDetail.setContractValue(weivalue);
-			}catch (Exception ex){
-				txDetail.setContractValue(new BigInteger("0"));
-				logger.error(ex.getMessage());
-			}
-            if(receipt.getStatus()  == false){
-                txDetail.setContractValue(new BigInteger("0"));
-            }
-			txDetail.setContractTx(true);
-		}
-		return ;
-	}
 
     /**
      * 获取交易的状态
@@ -557,6 +487,48 @@ public class EthApi {
         }
 
         return receipt;
+    }
+
+    /**
+     * 获取交易的状态
+     * @return
+     */
+    public Boolean getReceiptStatus(String txid){
+        LinkedHashMap result;
+        try{
+            result =  (LinkedHashMap)client.invoke("eth_getTransactionReceipt",new Object[]{txid}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+            logger.info("" + ex.getMessage());
+            return false;
+        }
+
+        if(result == null)
+        {
+            setErrorMsg("unexpected error");
+            return false;
+        }
+        try{
+            if(result.get("status") != null){
+                String status = (String)result.get("status") ;
+                if(status.compareTo("0x1") != 0) {
+                    return false;
+                }
+            }
+        }catch(Exception ex) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void getTxPool(){
+        Object result;
+        try{
+            result =  client.invoke("txpool_content",new Object[]{}, Object.class);
+        }catch(Throwable ex) {
+            setErrorMsg(ex.getMessage());
+        }
     }
 
     public String getErrorMsg() {

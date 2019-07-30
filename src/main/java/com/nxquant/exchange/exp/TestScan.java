@@ -1,4 +1,4 @@
-package com.nxquant.exchange.test;
+package com.nxquant.exchange.exp;
 
 import com.nxquant.exchange.entity.MemoryStorage;
 import com.nxquant.exchange.lifecycle.beanlife.CustomBean;

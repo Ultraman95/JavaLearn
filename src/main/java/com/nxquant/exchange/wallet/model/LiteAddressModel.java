@@ -1,4 +1,4 @@
-package com.nxquant.exchange.wallet.litecoin;
+package com.nxquant.exchange.wallet.model;
 
 /**
  * Created by Administrator on 2018-06-07.

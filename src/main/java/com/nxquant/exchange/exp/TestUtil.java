@@ -1,4 +1,4 @@
-package com.nxquant.exchange.test;
+package com.nxquant.exchange.exp;
 
 import com.nxquant.exchange.entity.Storage;
 import com.nxquant.exchange.entity.UserBean;
@@ -8,8 +8,6 @@ import com.nxquant.exchange.entity.Order;
 import com.nxquant.exchange.lifecycle.beanlife.CustomBean;
 import com.nxquant.exchange.service.UserService;
 import com.nxquant.exchange.wallet.bitcoin.BitCoinApi;
-import com.nxquant.exchange.wallet.bitcoin.CreateAddressReqInfo;
-import com.nxquant.exchange.wallet.bitcoin.ValidateAddressReqInfo;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
@@ -178,18 +176,7 @@ public class TestUtil {
     }
 
     public void testBitCoin() {
-        //CreateAddressReqInfo reqInfo = new CreateAddressReqInfo();
-        //reqInfo.setLabel("shilf");
-        //bitCoinApi.createNewAddress(reqInfo);
-        long blockHeight = bitCoinApi.getLatestBlockHeight();
-        System.out.println("the latestBlockHeight is " + blockHeight);
-        ValidateAddressReqInfo reqInfo = new ValidateAddressReqInfo();
-        reqInfo.setAddress("3CfdtBnxpK69mQoGPhz6RmkuyDmiRUHR9E");
-        if (bitCoinApi.validateAddress(reqInfo)) {
-            System.out.println("Address is right");
-        } else {
-            System.out.println("Address is wrong");
-        }
+
     }
 
 }

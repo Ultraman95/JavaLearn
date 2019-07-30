@@ -1,9 +1,11 @@
 package com.nxquant.exchange.wallet.model;
 
+import java.io.Serializable;
+
 /**
  * Created by Administrator on 2018-06-19.
  */
-public class UnSpentInf {
+public class UnSpentInf implements Serializable {
     public String getTxid() {
         return txid;
     }
