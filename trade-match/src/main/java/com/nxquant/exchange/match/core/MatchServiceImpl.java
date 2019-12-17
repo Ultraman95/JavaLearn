@@ -1,7 +1,5 @@
 package com.nxquant.exchange.match.core;
 
-//import com.js.trade.directive.CancelOrder;
-//import com.js.trade.directive.UpdateOrder;
 import com.nxquant.exchange.match.dto.*;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
@@ -16,9 +14,26 @@ import java.util.TreeMap;
  */
 @Service
 public class MatchServiceImpl implements MatchService {
+    private OrderBookManager orderBookManager = new OrderBookManager();
+    private List<IRtnInfo> rtnInfoList = new ArrayList<>();
 
     @Override
-    public void insertOrder(Order order, boolean isRedo, OrderBookManager orderBookManager){
+    public void initOrderBookManager(List<ExOrderBook> exOrderBookList){
+        orderBookManager.init(exOrderBookList);
+    }
+
+    @Override
+    public int getRtnInfoListSize(){
+        return  rtnInfoList.size();
+    }
+
+    @Override
+    public void clearRtnInfoList(){
+        rtnInfoList.clear();
+    }
+
+    @Override
+    public void insertOrder(Order order, boolean isRedo){
         TreeMap<Long, PriceBook> partyOrders = orderBookManager.getPartyOrders(order.getInstrumentId(), order.getDirection());
         if(partyOrders == null || partyOrders.isEmpty()){
             IRtnInfo rtnInfo = null;
@@ -36,7 +51,7 @@ public class MatchServiceImpl implements MatchService {
                 //打回
             }
             if(rtnInfo != null && !isRedo){
-                orderBookManager.addRtnInfo(rtnInfo);
+                addRtnInfo(rtnInfo);
             }
         }else {
             long orderRemainVolume = order.getVolume();
@@ -88,7 +103,7 @@ public class MatchServiceImpl implements MatchService {
                     rtnInfo = new RtnOrder();
                 }
                 if(rtnInfo != null && !isRedo){
-                    orderBookManager.addRtnInfo(rtnInfo);
+                    addRtnInfo(rtnInfo);
                 }
             }
 
@@ -103,7 +118,7 @@ public class MatchServiceImpl implements MatchService {
                 }
                 if(!isRedo) {
                     RtnTrade partyRtnTrade = new RtnTrade();
-                    orderBookManager.addRtnInfo(partyRtnTrade);
+                    addRtnInfo(partyRtnTrade);
                 }
             }
 
@@ -126,14 +141,14 @@ public class MatchServiceImpl implements MatchService {
             }
             if(!isRedo) {
                 RtnTrade rtnTrade = new RtnTrade();
-                orderBookManager.addRtnInfo(rtnTrade);
+                addRtnInfo(rtnTrade);
             }
         }
     }
 
-    /*
+
     @Override
-    public void cancelOrder(CancelOrder cancelOrder, boolean isRedo, OrderBookManager orderBookManager){
+    public void cancelOrder(CancelOrder cancelOrder, boolean isRedo){
         long orderId = cancelOrder.getOrderId();
         if(orderBookManager.cacheOrderMapContainsOrder(orderId)){
             Order order = orderBookManager.getOrderFromCacheOrderMap(orderId);
@@ -146,23 +161,23 @@ public class MatchServiceImpl implements MatchService {
 
 
     @Override
-    public void updateOrder(UpdateOrder updateOrder, boolean isRedo, OrderBookManager orderBookManager){
+    public void amendOrder(AmendOrder updateOrder, boolean isRedo){
         long orderId = updateOrder.getOrderId();
         if(orderBookManager.cacheOrderMapContainsOrder(orderId)){
             Order order = orderBookManager.getOrderFromCacheOrderMap(orderId);
             orderBookManager.removeOrderFromExOrderBookMap(order);
-            insertOrder(order, isRedo, orderBookManager);
+            insertOrder(order, isRedo);
         }else{
             //订单不存在
         }
-    }*/
+    }
 
 
     private void addRtnMblData(Order order, OrderBookManager orderBookManager){
         long mblVolume = Math.min(order.getVolume() - order.getTradedVolume() , order.getDisplayVolume());
         RtnMblData rtnMblData = new RtnMblData();
         rtnMblData.setVolume(mblVolume);
-        orderBookManager.addRtnInfo(rtnMblData);
+        addRtnInfo(rtnMblData);
     }
 
     //获取成交价格
@@ -200,5 +215,9 @@ public class MatchServiceImpl implements MatchService {
             }
             return true;
         }
+    }
+
+    void addRtnInfo(IRtnInfo rtnInfo){
+        rtnInfoList.add(rtnInfo);
     }
 }

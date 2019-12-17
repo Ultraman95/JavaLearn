@@ -1,9 +1,13 @@
 package com.nxquant.exchange.match.core;
 
-//import com.js.trade.directive.CancelOrder;
-//import com.js.trade.directive.UpdateOrder;
+
+import com.nxquant.exchange.match.dto.ExOrderBook;
 import com.nxquant.exchange.match.dto.Order;
+import com.nxquant.exchange.match.dto.CancelOrder;
+import com.nxquant.exchange.match.dto.AmendOrder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author shilf
@@ -11,28 +15,31 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface MatchService {
+    void initOrderBookManager(List<ExOrderBook> exOrderBookList);
+
+    int getRtnInfoListSize();
+
+    void clearRtnInfoList();
+
     /**
      * 报单
      * @param order
      * @param isRedo
-     * @param orderBookManager
      */
-    void insertOrder(Order order, boolean isRedo, OrderBookManager orderBookManager);
+    void insertOrder(Order order, boolean isRedo);
 
     /**
      * 撤单
      * @param order
      * @param isRedo
-     * @param orderBookManager
      */
-    //void cancelOrder(CancelOrder order, boolean isRedo, OrderBookManager orderBookManager);
+    void cancelOrder(CancelOrder order, boolean isRedo);
 
     /**
      * 改单
      * @param order
      * @param isRedo
-     * @param orderBookManager
      */
-    //void updateOrder(UpdateOrder order, boolean isRedo, OrderBookManager orderBookManager);
+    void amendOrder(AmendOrder order, boolean isRedo);
 
 }

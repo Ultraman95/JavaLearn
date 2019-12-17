@@ -40,26 +40,34 @@ public class MainWorker implements ConsumerRebalanceListener{
     private Map<TopicPartition, RedoOffset> redoOffsetMap = new HashMap<>();
     private Map<TopicPartition, List<ExOrderBook>> baseExOrderBookMap = new HashMap<>();
 
+    public WorkContext getWorkContext() {
+        return workContext;
+    }
+
     @Autowired
     WorkContext workContext;
 
+    private boolean isSupportKafka = false;
+
     public void start(){
-        if(initRedoOffset()){
-            //验证反演区间
-            for(Map.Entry<TopicPartition, RedoOffset> entry : redoOffsetMap.entrySet()){
-                RedoOffset redoOffset = entry.getValue();
-                if(redoOffset.getMaxOffset() == redoOffset.getMinOffset()){
-                    logger.info("Match_INFO: no need redo !" + ToolUtils.getGson().toJson(redoOffset));
-                }else if(redoOffset.getMaxOffset() < redoOffset.getMinOffset()){
-                    logger.error("Match_ERROR: redoOffsetMap failure !" + ToolUtils.getGson().toJson(redoOffsetMap));
-                    System.exit(-1);
+        if (isSupportKafka) {
+            if (initRedoOffset()) {
+                //验证反演区间
+                for (Map.Entry<TopicPartition, RedoOffset> entry : redoOffsetMap.entrySet()) {
+                    RedoOffset redoOffset = entry.getValue();
+                    if (redoOffset.getMaxOffset() == redoOffset.getMinOffset()) {
+                        logger.info("Match_INFO: no need redo !" + ToolUtils.getGson().toJson(redoOffset));
+                    } else if (redoOffset.getMaxOffset() < redoOffset.getMinOffset()) {
+                        logger.error("Match_ERROR: redoOffsetMap failure !" + ToolUtils.getGson().toJson(redoOffsetMap));
+                        System.exit(-1);
+                    }
                 }
+            } else {
+                logger.error("Match_ERROR: initRedoOffset Failure !");
+                System.exit(-1);
             }
-        }else {
-            logger.error("Match_ERROR: initRedoOffset Failure !");
-            System.exit(-1);
+            consumeInput();
         }
-        consumeInput();
     }
 
 

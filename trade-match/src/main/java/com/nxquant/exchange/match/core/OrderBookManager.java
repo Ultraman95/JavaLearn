@@ -11,7 +11,6 @@ import java.util.*;
 public class OrderBookManager {
     private Map<String, ExOrderBook> exOrderBookMap = new HashMap<>();
     private Map<Long, Order> cacheOrderMap = new HashMap<>();
-    private List<IRtnInfo> rtnInfoList = new ArrayList<>();
 
     void init(List<ExOrderBook> exOrderBookList){
         if(exOrderBookList != null) {
@@ -125,15 +124,5 @@ public class OrderBookManager {
         }
     }
 
-    void addRtnInfo(IRtnInfo rtnInfo){
-        rtnInfoList.add(rtnInfo);
-    }
 
-    List<IRtnInfo> getRtnInfoList() {
-        return rtnInfoList;
-    }
-
-    void clearRtnInfoList(){
-        rtnInfoList.clear();
-    }
 }

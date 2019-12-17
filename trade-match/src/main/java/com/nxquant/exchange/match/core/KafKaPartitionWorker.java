@@ -3,8 +3,6 @@ package com.nxquant.exchange.match.core;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.dsl.Disruptor;
-//import com.js.trade.directive.CancelOrder;
-//import com.js.trade.directive.UpdateOrder;
 import com.nxquant.exchange.match.configure.WorkContext;
 import com.nxquant.exchange.match.dto.*;
 import com.nxquant.exchange.match.dto.Order;
@@ -28,7 +26,6 @@ public class KafKaPartitionWorker implements EventHandler<InputEventData>, Lifec
     private Disruptor<InputEventData> disruptor;
     private boolean disruptorStartStatus = false;
 
-    private OrderBookManager orderBookManager = new OrderBookManager();
     private WorkContext workContext;
     private int receiveCount = 0;
     private KafkaProducer sendProducer;
@@ -36,7 +33,9 @@ public class KafKaPartitionWorker implements EventHandler<InputEventData>, Lifec
     KafKaPartitionWorker(RedoOffset redoOffset, List<ExOrderBook> exOrderBookList, WorkContext workContext){
         this.redoOffset = redoOffset;
         this.workContext = workContext;
-        orderBookManager.init(exOrderBookList);
+        if (!exOrderBookList.isEmpty()) {
+            this.workContext.getMatchService().initOrderBookManager(exOrderBookList);
+        }
         initDisruptor();
     }
 
@@ -58,14 +57,14 @@ public class KafKaPartitionWorker implements EventHandler<InputEventData>, Lifec
         boolean redo  = isReDo(eData.getOffset());
         if(content instanceof Order){
             Order order = (Order) content;
-            this.workContext.getMatchService().insertOrder(order, redo, orderBookManager);
-        }/*else if(content instanceof CancelOrder){
+            this.workContext.getMatchService().insertOrder(order, redo);
+        }else if(content instanceof CancelOrder){
             CancelOrder cancelOrder = (CancelOrder) content;
-            this.workContext.getMatchService().cancelOrder(cancelOrder, redo, orderBookManager);
-        }else if(content instanceof UpdateOrder){
-            UpdateOrder updateOrder = (UpdateOrder) content;
-            this.workContext.getMatchService().updateOrder(updateOrder, redo, orderBookManager);
-        }*/
+            this.workContext.getMatchService().cancelOrder(cancelOrder, redo);
+        }else if(content instanceof AmendOrder){
+            AmendOrder amendOrder = (AmendOrder) content;
+            this.workContext.getMatchService().amendOrder(amendOrder, redo);
+        }
         //sendMsg(endOfBatch);
     }
 
@@ -86,12 +85,13 @@ public class KafKaPartitionWorker implements EventHandler<InputEventData>, Lifec
         try {
             receiveCount++;
             boolean isEnoughCount = receiveCount > this.workContext.getCommitEnoughCount();
-            boolean isEnoughSize = orderBookManager.getRtnInfoList().size() > this.workContext.getCommitEnoughSize();
+            int rtnInfoListSize = this.workContext.getMatchService().getRtnInfoListSize();
+            boolean isEnoughSize = rtnInfoListSize > this.workContext.getCommitEnoughSize();
             if (isEnoughCount || isEnoughSize || endOfBatch) {
                 this.sendProducer.beginTransaction();
                 //send Msg
                 this.sendProducer.commitTransaction();
-                orderBookManager.clearRtnInfoList();
+                this.workContext.getMatchService().clearRtnInfoList();
                 receiveCount = 0;
             }
         }catch (Exception exp){

@@ -1,6 +1,8 @@
 package com.nxquant.exchange.match.controller;
 
 import com.nxquant.exchange.match.core.MainWorker;
+import com.nxquant.exchange.match.core.OrderBookManager;
+import com.nxquant.exchange.match.dto.Order;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,5 +42,10 @@ public class MatchController {
         return "";
     }
 
-
+    @GetMapping(value = "/insertOrder")
+    public String insertOrder(HttpServletRequest request) {
+        Order order = new Order();
+        mainWorker.getWorkContext().getMatchService().insertOrder(order, false);
+        return "";
+    }
 }
