@@ -4,20 +4,22 @@ import java.io.Serializable;
 
 /**
  * @author shilf
- * MOrderPriceType
+ * TimeConditionType
  */
-public enum MOrderPriceType implements Serializable {
-    //限价单
-    OPT_LIMIT("limit", 0),
-    //市价单
-    OPT_MARKET("market", 1);
+public enum TimeConditionType implements Serializable {
+    //正常单
+    TCT_GTC("gtc", 0),
+    //立即成交否则撤单
+    TCT_IOC("ioc", 1),
+    //全部成交否则撤单
+    TCT_FOK("fok", 2);
 
 
     private String key;
     private int value;
 
 
-    MOrderPriceType(String key, int value) {
+    TimeConditionType(String key, int value) {
         this.key = key;
         this.value = value;
     }

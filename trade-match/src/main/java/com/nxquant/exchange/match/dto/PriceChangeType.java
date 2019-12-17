@@ -6,5 +6,5 @@ import java.io.Serializable;
  * @author shilf
  * 价格变动方向
  */
-public enum MPriceChangeType implements Serializable {
+public enum PriceChangeType implements Serializable {
 }

@@ -4,20 +4,22 @@ import java.io.Serializable;
 
 /**
  * @author shilf
- * 成交价生成方式
+ * 报单类型
  */
-public enum MTradePriceType implements Serializable {
-    //对手价
-    TCT_OPPONENT("opponent", 0),
-    //三价取中
-    TPT_THIRDMIDDLE("thirdMiddle", 1);
+public enum OrderType implements Serializable {
+    //报单
+    OT_INSERT("insert", 0),
+    //撤单
+    OT_CANCEL("cancel", 1),
+    //改单
+    OT_UPDATE("cancel", 2);
 
 
     private String key;
     private int value;
 
 
-    MTradePriceType(String key, int value) {
+    OrderType(String key, int value) {
         this.key = key;
         this.value = value;
     }

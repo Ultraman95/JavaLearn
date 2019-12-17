@@ -6,7 +6,7 @@ import java.math.BigDecimal;
  * @author shilf
  * 撮合订单类
  */
-public class MOrder implements Info {
+public class Order implements Info {
 
     private String instrumentId;
 
@@ -20,23 +20,23 @@ public class MOrder implements Info {
 
     private Long volume;
 
-    private MOrderPriceType priceType;
+    private OrderPriceType priceType;
 
-    private MDirectionType direction;
+    private DirectionType direction;
 
-    private MOffsetType offset;
+    private OffsetType offset;
 
-    private MTimeConditionType timeCondition;
+    private TimeConditionType timeCondition;
 
-    private MOrderType orderType;
+    private OrderType orderType;
 
-    private MOrderStatus orderStatus;
+    private OrderStatus orderStatus;
 
     private Long tradedVolume;
 
     private Long displayVolume;
 
-    private MOrderPurposeType purposeType;
+    private OrderPurposeType purposeType;
 
     private String clientId;
 
@@ -52,12 +52,12 @@ public class MOrder implements Info {
 
     private Long incId;
 
-    public MOrder(){}
+    public Order(){}
 
     @Override
     public boolean equals(Object order) {
-        MOrder tmpMOrder = (MOrder)order;
-        return this.orderId.equals(tmpMOrder.getOrderId());
+        Order tmpOrder = (Order)order;
+        return this.orderId.equals(tmpOrder.getOrderId());
     }
 
     @Override
@@ -121,43 +121,43 @@ public class MOrder implements Info {
         this.volume = volume;
     }
 
-    public MOrderPriceType getPriceType() {
+    public OrderPriceType getPriceType() {
         return priceType;
     }
 
-    public void setPriceType(MOrderPriceType priceType) {
+    public void setPriceType(OrderPriceType priceType) {
         this.priceType = priceType;
     }
 
-    public MDirectionType getDirection() {
+    public DirectionType getDirection() {
         return direction;
     }
 
-    public void setDirection(MDirectionType direction) {
+    public void setDirection(DirectionType direction) {
         this.direction = direction;
     }
 
-    public MOffsetType getOffset() {
+    public OffsetType getOffset() {
         return offset;
     }
 
-    public void setOffset(MOffsetType offset) {
+    public void setOffset(OffsetType offset) {
         this.offset = offset;
     }
 
-    public MTimeConditionType getTimeCondition() {
+    public TimeConditionType getTimeCondition() {
         return timeCondition;
     }
 
-    public void setTimeCondition(MTimeConditionType timeCondition) {
+    public void setTimeCondition(TimeConditionType timeCondition) {
         this.timeCondition = timeCondition;
     }
 
-    public MOrderType getOrderType() {
+    public OrderType getOrderType() {
         return orderType;
     }
 
-    public void setOrderType(MOrderType orderType) {
+    public void setOrderType(OrderType orderType) {
         this.orderType = orderType;
     }
 
@@ -193,11 +193,11 @@ public class MOrder implements Info {
         this.displayVolume = displayVolume;
     }
 
-    public MOrderPurposeType getPurposeType() {
+    public OrderPurposeType getPurposeType() {
         return purposeType;
     }
 
-    public void setPurposeType(MOrderPurposeType purposeType) {
+    public void setPurposeType(OrderPurposeType purposeType) {
         this.purposeType = purposeType;
     }
 
@@ -209,11 +209,11 @@ public class MOrder implements Info {
         this.orderLocalId = orderLocalId;
     }
 
-    public MOrderStatus getOrderStatus() {
+    public OrderStatus getOrderStatus() {
         return orderStatus;
     }
 
-    public void setOrderStatus(MOrderStatus orderStatus) {
+    public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
     }
 

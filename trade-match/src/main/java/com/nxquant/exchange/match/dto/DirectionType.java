@@ -6,7 +6,7 @@ import java.io.Serializable;
  * @author shilf
  * MDirectionType
  */
-public enum MDirectionType implements Serializable {
+public enum DirectionType implements Serializable {
     //买
     DT_BUY("buy", 0),
     //卖
@@ -17,7 +17,7 @@ public enum MDirectionType implements Serializable {
     private int value;
 
 
-    MDirectionType(String key, int value) {
+    DirectionType(String key, int value) {
         this.key = key;
         this.value = value;
     }

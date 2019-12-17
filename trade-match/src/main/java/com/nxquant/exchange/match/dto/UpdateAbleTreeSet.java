@@ -27,7 +27,7 @@ public class UpdateAbleTreeSet<E> extends TreeSet<E>
 		super(s);
 	}
 
-	private MDirectionType direction;
+	private DirectionType direction;
 
 	public boolean updateSort(E element) {
 		if (remove(element)) {
@@ -36,11 +36,11 @@ public class UpdateAbleTreeSet<E> extends TreeSet<E>
 		return false;
 	}
 
-	public MDirectionType getDirection() {
+	public DirectionType getDirection() {
 		return direction;
 	}
 
-	public void setDirection(MDirectionType direction) {
+	public void setDirection(DirectionType direction) {
 		this.direction = direction;
 	}
 }

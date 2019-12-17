@@ -4,22 +4,20 @@ import java.io.Serializable;
 
 /**
  * @author shilf
- * MTimeConditionType
+ * OrderPurposeType
  */
-public enum MTimeConditionType implements Serializable {
+public enum OrderPurposeType implements Serializable {
     //正常单
-    TCT_GTC("gtc", 0),
-    //立即成交否则撤单
-    TCT_IOC("ioc", 1),
-    //全部成交否则撤单
-    TCT_FOK("fok", 2);
+    OPT_NORMAL("normal", 0),
+    //被动委托
+    OPT_POSTONLY("postOnly", 1);
 
 
     private String key;
     private int value;
 
 
-    MTimeConditionType(String key, int value) {
+    OrderPurposeType(String key, int value) {
         this.key = key;
         this.value = value;
     }

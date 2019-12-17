@@ -4,9 +4,9 @@ import java.io.Serializable;
 
 /**
  * @author shilf
- * MOrderStatus
+ * OrderStatus
  */
-public enum MOrderStatus implements Serializable {
+public enum OrderStatus implements Serializable {
     //新建订单
     OS_NEW("new", 0),
     //部分成交
@@ -24,7 +24,7 @@ public enum MOrderStatus implements Serializable {
     private int value;
 
 
-    MOrderStatus(String key, int value) {
+    OrderStatus(String key, int value) {
         this.key = key;
         this.value = value;
     }

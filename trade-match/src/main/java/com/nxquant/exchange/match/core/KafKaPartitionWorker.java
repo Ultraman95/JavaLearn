@@ -6,11 +6,8 @@ import com.lmax.disruptor.dsl.Disruptor;
 //import com.js.trade.directive.CancelOrder;
 //import com.js.trade.directive.UpdateOrder;
 import com.nxquant.exchange.match.configure.WorkContext;
-import com.nxquant.exchange.match.dto.Info;
-import com.nxquant.exchange.match.dto.InputEventData;
-import com.nxquant.exchange.match.dto.ExOrderBook;
-import com.nxquant.exchange.match.dto.MOrder;
-import com.nxquant.exchange.match.dto.RedoOffset;
+import com.nxquant.exchange.match.dto.*;
+import com.nxquant.exchange.match.dto.Order;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.TopicPartition;
@@ -59,8 +56,8 @@ public class KafKaPartitionWorker implements EventHandler<InputEventData>, Lifec
     public void onEvent(InputEventData eData, long sequence, boolean endOfBatch) {
         Info content = eData.getContent();
         boolean redo  = isReDo(eData.getOffset());
-        if(content instanceof MOrder){
-            MOrder order = (MOrder) content;
+        if(content instanceof Order){
+            Order order = (Order) content;
             this.workContext.getMatchService().insertOrder(order, redo, orderBookManager);
         }/*else if(content instanceof CancelOrder){
             CancelOrder cancelOrder = (CancelOrder) content;

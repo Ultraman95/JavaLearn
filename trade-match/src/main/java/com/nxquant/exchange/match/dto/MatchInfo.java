@@ -1,14 +1,14 @@
 package com.nxquant.exchange.match.dto;
 
 public class MatchInfo {
-    private MOrder matchOrder;
+    private Order matchOrder;
     private long remainVolume;
 
-    public MOrder getMatchOrder() {
+    public Order getMatchOrder() {
         return matchOrder;
     }
 
-    public void setMatchOrder(MOrder matchOrder) {
+    public void setMatchOrder(Order matchOrder) {
         this.matchOrder = matchOrder;
     }
 

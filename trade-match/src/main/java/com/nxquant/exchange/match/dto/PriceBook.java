@@ -11,7 +11,7 @@ public class PriceBook implements Info {
     private long price;
     private long reallyVolume;
     private long displayVolume;
-    private TreeSet<MOrder> orderSet;
+    private TreeSet<Order> orderSet;
 
     public PriceBook(){
         reallyVolume = 0;
@@ -20,9 +20,9 @@ public class PriceBook implements Info {
     }
 
     private void createOrderSet(){
-        orderSet =new TreeSet<>(new Comparator<MOrder>() {
+        orderSet =new TreeSet<>(new Comparator<Order>() {
             @Override
-            public int compare(MOrder o1, MOrder o2) {
+            public int compare(Order o1, Order o2) {
                 long compareValue = o1.getCreateTs() - o2.getCreateTs() != 0 ? (o1.getCreateTs() - o2.getCreateTs()) : (o1.getIncId() - o2.getIncId());
                 return (int)compareValue;
             }
@@ -53,7 +53,7 @@ public class PriceBook implements Info {
         this.displayVolume = displayVolume;
     }
 
-    public TreeSet<MOrder> getOrderSet() {
+    public TreeSet<Order> getOrderSet() {
         return orderSet;
     }
 }

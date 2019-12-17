@@ -4,20 +4,20 @@ import java.io.Serializable;
 
 /**
  * @author shilf
- * MOrderPurposeType
+ * 成交价生成方式
  */
-public enum MOrderPurposeType implements Serializable {
-    //正常单
-    OPT_NORMAL("normal", 0),
-    //被动委托
-    OPT_POSTONLY("postOnly", 1);
+public enum TradePriceType implements Serializable {
+    //对手价
+    TCT_OPPONENT("opponent", 0),
+    //三价取中
+    TPT_THIRDMIDDLE("thirdMiddle", 1);
 
 
     private String key;
     private int value;
 
 
-    MOrderPurposeType(String key, int value) {
+    TradePriceType(String key, int value) {
         this.key = key;
         this.value = value;
     }

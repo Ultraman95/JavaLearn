@@ -4,20 +4,20 @@ import java.io.Serializable;
 
 /**
  * @author shilf
- * MOffsetType
+ * OrderPriceType
  */
-public enum MOffsetType implements Serializable {
-    //开仓
-    OT_OPEN("open", 0),
-    //平仓
-    OT_CLOSE("close", 1);
+public enum OrderPriceType implements Serializable {
+    //限价单
+    OPT_LIMIT("limit", 0),
+    //市价单
+    OPT_MARKET("market", 1);
 
 
     private String key;
     private int value;
 
 
-    MOffsetType(String key, int value) {
+    OrderPriceType(String key, int value) {
         this.key = key;
         this.value = value;
     }

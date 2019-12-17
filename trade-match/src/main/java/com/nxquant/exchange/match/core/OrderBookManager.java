@@ -1,7 +1,6 @@
 package com.nxquant.exchange.match.core;
 
 import com.nxquant.exchange.match.dto.*;
-import com.nxquant.exchange.match.dto.*;
 
 import java.util.*;
 
@@ -11,7 +10,7 @@ import java.util.*;
  */
 public class OrderBookManager {
     private Map<String, ExOrderBook> exOrderBookMap = new HashMap<>();
-    private Map<Long, MOrder> cacheOrderMap = new HashMap<>();
+    private Map<Long, Order> cacheOrderMap = new HashMap<>();
     private List<IRtnInfo> rtnInfoList = new ArrayList<>();
 
     void init(List<ExOrderBook> exOrderBookList){
@@ -30,19 +29,19 @@ public class OrderBookManager {
     private void addExOrderBookToCacheOrderMap(ExOrderBook exOrderBook){
         if(exOrderBook.getOrderBook() != null) {
             for(PriceBook priceBook : exOrderBook.getOrderBook().getBuyOrders().values()){
-                for(MOrder order : priceBook.getOrderSet()){
+                for(Order order : priceBook.getOrderSet()){
                     cacheOrderMap.put(order.getOrderId(), order);
                 }
             }
             for(PriceBook priceBook : exOrderBook.getOrderBook().getSellOrders().values()){
-                for(MOrder order : priceBook.getOrderSet()){
+                for(Order order : priceBook.getOrderSet()){
                     cacheOrderMap.put(order.getOrderId(), order);
                 }
             }
         }
     }
 
-    void addOrderToExOrderBookMap(MOrder order){
+    void addOrderToExOrderBookMap(Order order){
         ExOrderBook exOrderBook = exOrderBookMap.get(order.getInstrumentId());
         if(exOrderBook == null){
             exOrderBook = new ExOrderBook(order.getInstrumentId());
@@ -54,7 +53,7 @@ public class OrderBookManager {
             exOrderBook.setOrderBook(orderBook);
         }
         TreeMap<Long, PriceBook> relatedOrders;
-        if(order.getDirection() == MDirectionType.DT_BUY){
+        if(order.getDirection() == DirectionType.DT_BUY){
             relatedOrders = orderBook.getBuyOrders();
         }else {
             relatedOrders = orderBook.getSellOrders();
@@ -69,7 +68,7 @@ public class OrderBookManager {
         priceBook.setReallyVolume(priceBook.getReallyVolume() + order.getVolume() - order.getTradedVolume());
     }
 
-    void addOrderToCacheOrderMap(MOrder order){
+    void addOrderToCacheOrderMap(Order order){
         cacheOrderMap.put(order.getOrderId(), order);
     }
 
@@ -77,17 +76,17 @@ public class OrderBookManager {
         return cacheOrderMap.containsKey(orderId);
     }
 
-    MOrder getOrderFromCacheOrderMap(long orderId){
+    Order getOrderFromCacheOrderMap(long orderId){
         return cacheOrderMap.get(orderId);
     }
 
-    void removeOrderFromExOrderBookMap(MOrder order){
+    void removeOrderFromExOrderBookMap(Order order){
         ExOrderBook exOrderBook = exOrderBookMap.get(order.getInstrumentId());
         if(exOrderBook != null){
             TreeMap<Long, PriceBook> relatedOrders;
             OrderBook orderBook = exOrderBook.getOrderBook();
             if(orderBook != null) {
-                if (order.getDirection() == MDirectionType.DT_BUY) {
+                if (order.getDirection() == DirectionType.DT_BUY) {
                     relatedOrders = orderBook.getBuyOrders();
                 } else {
                     relatedOrders = orderBook.getSellOrders();
@@ -106,7 +105,7 @@ public class OrderBookManager {
         }
     }
 
-    void removeOrderFromCacheOrderMap(MOrder order){
+    void removeOrderFromCacheOrderMap(Order order){
         cacheOrderMap.remove(order.getOrderId());
     }
 
@@ -114,12 +113,12 @@ public class OrderBookManager {
         return exOrderBookMap.get(instrumentId);
     }
 
-    TreeMap<Long, PriceBook> getPartyOrders(String instrumentId, MDirectionType direction){
+    TreeMap<Long, PriceBook> getPartyOrders(String instrumentId, DirectionType direction){
         ExOrderBook exOrderBook = exOrderBookMap.get(instrumentId);
         if(exOrderBook == null){
             return null;
         }
-        if(direction == MDirectionType.DT_BUY){
+        if(direction == DirectionType.DT_BUY){
             return exOrderBook.getOrderBook().getSellOrders();
         }else {
             return exOrderBook.getOrderBook().getBuyOrders();
