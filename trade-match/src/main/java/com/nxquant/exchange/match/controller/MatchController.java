@@ -36,7 +36,7 @@ public class MatchController {
     }
 
 
-    @GetMapping(value = "/export")
+    @GetMapping(value = "/exportOrderBook")
     public String exportOrderBook(@RequestParam(value = "symbol") String symbol,
                                   HttpServletRequest request) {
         return "";
