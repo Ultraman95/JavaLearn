@@ -11,6 +11,7 @@
 
     <modules>
         <module>trade-base</module>
+		<module>trade-match</module>
     </modules>
 
     <build>
