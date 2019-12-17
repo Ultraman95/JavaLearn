@@ -31,7 +31,7 @@ public class MainWorker implements ConsumerRebalanceListener{
 
     private boolean isStop = false;
 
-    private ConcurrentMap<String, KafKaPartitionWorker> kpWorkMap = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, PartitionWorker> kpWorkMap = new ConcurrentHashMap<>();
     private KafkaConsumer<String, Info> inputConsumer;
     private KafkaConsumer<String, Info> snapConsumer;
     private KafkaConsumer<String, Info> incConsumer;
@@ -80,7 +80,7 @@ public class MainWorker implements ConsumerRebalanceListener{
                 if(!inputDataList.isEmpty()){
                     for (ConsumerRecord<String, Info> inputData : inputDataList) {
                         String workerKey = inputData.topic() + "_" + inputData.partition();
-                        KafKaPartitionWorker kpWorker = kpWorkMap.get(workerKey);
+                        PartitionWorker kpWorker = kpWorkMap.get(workerKey);
                         if (kpWorker == null) {
                             logger.error("Match_ERROR: consumeInput , kpWorker is null !");
                             System.exit(-1);
@@ -219,7 +219,7 @@ public class MainWorker implements ConsumerRebalanceListener{
 
     @Override
     public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-        //ToDo--shilf
+        //ToDo--kafka动态切换处理
     }
 
     @Override
@@ -236,12 +236,12 @@ public class MainWorker implements ConsumerRebalanceListener{
     }
 
     private void addKafkaPartitionWorK(TopicPartition inputTp){
-        KafKaPartitionWorker kpWorker;
+        PartitionWorker kpWorker;
         String workerKey = inputTp.topic() + "_" + inputTp.partition();
         if (!kpWorkMap.containsKey(workerKey)) {
             RedoOffset redoOffset = redoOffsetMap.get(inputTp);
             List<ExOrderBook> exOrderBookList = baseExOrderBookMap.get(inputTp);
-            kpWorker = new KafKaPartitionWorker(redoOffset, exOrderBookList, workContext);
+            kpWorker = new PartitionWorker(redoOffset, exOrderBookList, workContext);
             kpWorkMap.put(workerKey, kpWorker);
             kpWorker.start();
             inputConsumer.seek(inputTp, redoOffset.getMinOffset());

@@ -28,7 +28,6 @@ public class WorkContext {
     private final String PREFIX_KAFKA_SNAP_CONSUMER  = PREFIX + ".snap.consumer";
     private final String PREFIX_KAFKA_INC_CONSUMER  = PREFIX + ".inc.consumer";
 
-
     private Properties inputConsumerProp = new Properties();
     private Properties snapConsumerProp = new Properties();
     private Properties incConsumerProp = new Properties();
@@ -43,8 +42,8 @@ public class WorkContext {
     private int transActionOffset = 2;
     private int tryTimes = 3;
 
-    private int commitEnoughSize = 50;
-    private int commitEnoughCount = 4;
+    private int commitRtnSize = 50;
+    private int commitReceiveSize = 4;
 
     private Map<String, TopicPartition> instrumentTpMap = new HashMap<>();
 
@@ -69,10 +68,6 @@ public class WorkContext {
 
     public void setInputTopic(String inputTopic) {
         this.inputTopic = inputTopic;
-    }
-
-    public String getPREFIX() {
-        return PREFIX;
     }
 
     public String getSnapTopic() {
@@ -107,12 +102,13 @@ public class WorkContext {
         return tryTimes;
     }
 
-    public int getCommitEnoughSize() {
-        return commitEnoughSize;
+
+    public int getCommitRtnSize() {
+        return commitRtnSize;
     }
 
-    public int getCommitEnoughCount() {
-        return commitEnoughCount;
+    public int getCommitReceiveSize() {
+        return commitReceiveSize;
     }
 
     public Map<String, TopicPartition> getInstrumentTpMap() {
