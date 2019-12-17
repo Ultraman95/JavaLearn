@@ -8,7 +8,7 @@
         <version>2.1.5.RELEASE</version>
         <relativePath/>
     </parent>
-    <groupId>com.nxquant.exchange</groupId>
+    <groupId>com.nxquant.exchange.base</groupId>
     <artifactId>trade-base</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>tradebase</name>
